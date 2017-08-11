@@ -14,9 +14,15 @@ In a recent paper [@magallon2001], the authors argue that evolution of bill shap
 
 My question is: could the observed pattern nonetheless result from a process that does not depend on the hypothesis that niche space filling drives diversification slow-downs?  One could imagine that this is possible becuase extinct lineages leave no trace of thier morpology and contribution to disparity.  So even if the disparity through time plot is different from Brownian motion, could the niche space occupancy still be largely constant through time?
 
+A simulatin proof of context:
+
 ```{r}
 library(ape)
 library(geiger)
 tre <- rphylo(200, 1, 0.8, fossils = TRUE)
 
+ntrait <- 8
+s <- as.matrix(exp(-dist(matrix(runif(ntrait*2), ncol = 2))))
+diag(s) <- runif(ntrait, 1, 1.5)
+traits <- sim.char(tre, s, 1)
 ```
