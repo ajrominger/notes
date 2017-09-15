@@ -2,7 +2,10 @@
 title: "Notes on the SFI postdoc conference today"
 author: "A. J. Rominger"
 date: "`r format(Sys.time(), '%d %B %Y')`"
-output: html_document
+tags: statmech-of-biodiversity equality equilibrium
+output: 
+  md_document:
+    variant: markdown_github
 bibliography: notes.bib
 ---
 

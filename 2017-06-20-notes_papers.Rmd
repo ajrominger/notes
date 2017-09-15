@@ -2,7 +2,10 @@
 title: "Paper notes for today"
 author: "A. J. Rominger"
 date: "`r format(Sys.time(), '%d %B %Y')`"
-output: html_document
+tags: hawaii evo-ecology equilibrium diversification
+output: 
+  md_document:
+    variant: markdown_github
 bibliography: notes.bib
 ---
 

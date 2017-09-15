@@ -2,7 +2,10 @@
 title: "Notes on an interesting morphospace evolution paper"
 author: "A. J. Rominger"
 date: "`r format(Sys.time(), '%d %B %Y')`"
-output: html_document
+tags: equilibrium diversification evo-ecology
+output: 
+  md_document:
+    variant: markdown_github
 bibliography: notes.bib
 ---
 

@@ -2,7 +2,10 @@
 title: "Ideas about monopolies"
 author: "A. J. Rominger"
 date: "`r format(Sys.time(), '%d %B %Y')`"
-output: html_document
+tags: equality policy economics
+output: 
+  md_document:
+    variant: markdown_github
 bibliography: notes.bib
 ---
 
