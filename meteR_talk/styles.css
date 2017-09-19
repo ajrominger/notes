@@ -1,0 +1,16 @@
+/* smaller font on title page */
+.title-slide hgroup h1 {
+  font-size: 55px;
+}
+
+/* make code chunks centered and take up full width of slide */
+pre {
+  width: 100%;
+  left: 0;
+}
+
+/*
+slides > slide.title-slide {
+    
+}
+*/

@@ -1,9 +1,10 @@
 ---
-title: "`meteR`: the maximum entropy theory of ecology in `R`"
+title: "*meteR*: the maximum entropy theory of ecology in *R*"
 author: "A. J. Rominger"
 date: "29 September 2017"
 output: 
     ioslides_presentation:
+        css: styles.css
         transition: 0
 ---
 
