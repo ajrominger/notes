@@ -3,14 +3,59 @@
   font-size: 55px;
 }
 
+aside.gdbar img {
+  width: 85px;
+  height: 85px;
+  position: absolute;
+  right: 0;
+  margin:  8px 15px;
+}
+
+aside.gdbar {
+  height: 97px;
+  width: 80%;
+  position: absolute;
+  left: 10%;
+  top: 125px;
+  -webkit-border-radius: 10px 10px 10px 10px;
+  -moz-border-radius: 10px 10px 10px 10px;
+  -ms-border-radius: 10px 10px 10px 10px;
+  -o-border-radius: 10px 10px 10px 10px;
+  border-radius: 10px 10px 10px 10px;
+  background: #e6e6e6;
+}
+
 /* make code chunks centered and take up full width of slide */
 pre {
   width: 100%;
   left: 0;
 }
 
-/*
-slides > slide.title-slide {
-    
+/* make slides one color */
+slides > slide.backdrop {
+  background: #ffffff;
+  background-color: white;
 }
-*/
+
+/* immediate transitions */
+.build > * {
+  -webkit-transition: opacity 0s;
+  -webkit-transition-delay: 0s;
+  -moz-transition: opacity 0s;
+  -o-transition: opacity 0s;
+  transition: opacity 0s;
+}
+
+/* no rounded slide boarders */
+slides > slide {
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  -ms-border-radius: 0;
+  -o-border-radius: 0;
+  border-radius: 0;
+}
+
+/* remove slide numbers so custom animation is easier */
+slides > slide:not(.nobackground):after {
+  content: '';
+}
