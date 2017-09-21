@@ -1,6 +1,7 @@
 ---
 title: "*meteR*: the maximum entropy theory of ecology in *R*"
-author: "A. J. Rominger"
+author: "Andy Rominger"
+# logo: profile.jpg
 date: "29 September 2017"
 output: 
     ioslides_presentation:
@@ -12,27 +13,144 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+<!---
+## {.columns-2}
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-## Slide with Bullets
-
-- Bullet 1
-- Bullet 2
-- Bullet 3
-
-## Slide with R Output
-
-```{r cars, echo = TRUE}
-summary(cars)
+```{r, fig.width=4, fig.height=6}
+foo <- jpeg::readJPEG('macroeco.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+box()
 ```
 
-## Slide with Plot
 
-```{r pressure}
-plot(pressure)
+## {.columns-2}
+
+```{r, fig.width=4, fig.height=6}
+foo <- jpeg::readJPEG('macroeco.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+box()
 ```
 
+
+```{r, fig.width=4, fig.height=2.5}
+library(maps)
+map('world', 'mexico', col = c(rep('white', 7), 'gray'), fill = TRUE, lwd = 0.01, 
+    mar = rep(0, 4))
+set.seed(3)
+x <- runif(20, -107, -103)
+y <- -x - 81 + rnorm(length(x), 0, 1.5)
+points(x, y)
+```
+
+## {.columns-2}
+
+```{r, fig.width=4, fig.height=6}
+foo <- jpeg::readJPEG('macroeco.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+box()
+```
+
+
+```{r, fig.width=4, fig.height=2.5}
+library(maps)
+map('world', 'mexico', col = c(rep('white', 7), 'gray'), fill = TRUE, lwd = 0.01, 
+    mar = rep(0, 4))
+set.seed(3)
+x <- runif(20, -107, -103)
+y <- -x - 81 + rnorm(length(x), 0, 1.5)
+points(x, y)
+```
+
+```{r, fig.width=4, fig.height=2.5}
+library(socorro)
+set.seed(1)
+x <- pika::rfish(100, 0.01)
+par(mar = c(3, 3, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0), mfrow = c(1, 2))
+plot(sort(x, TRUE), log = 'y', yaxt = 'n', xlab = 'Rank', ylab = 'Abundance')
+logAxis(2)
+
+plot(exp(2:9), seq(3, 100, length.out = 8), log = 'xy', axes = FALSE, frame.plot = TRUE, 
+     xlab = 'Area', ylab = 'Species', ylim = c(2, 110))
+logAxis(1)
+logAxis(2)
+```
+-->
+
+##
+<span style="font-size: 40px; color: #FFFFFF">Maximum Entropy</span>
+<br/>
+<br/>
+<br/>
+```{r, fig.height=3, fig.width=3, fig.align='center'}
+par(mar = c(3, 3, 0, 0), mgp = c(1, 0, 0))
+curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability', 
+      axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
+```
+
+
+## 
+<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
+<br/>
+<br/>
+<br/>
+```{r, fig.height=3, fig.width=3, fig.align='center'}
+par(mar = c(3, 3, 0, 0), mgp = c(1, 0, 0))
+curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability', 
+      axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
+```
+
+
+## {.columns-2}
+<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
+<br/>
+<br/>
+```{r, fig.height=2, fig.width=3, fig.align='center'}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0))
+plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1.5), xlab = 'x', ylab = 'Probability', 
+     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
+axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
+```
+
+## {.columns-2}
+<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
+<br/>
+<br/>
+<div>
+```{r, fig.height=2, fig.width=3, fig.align='center'}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0))
+plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1), xlab = 'x', ylab = 'Probability', 
+     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25', yaxs = 'i')
+axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
+segments(x0 = c(0.1, 0.1, 0.9), x1 = c(0.1, 0.9, 0.9), 
+         y0 = c(0, 0.5, 0.5), y1 = c(0.5, 0.5, 0), col = 'gray25', 
+         lwd = 4)
+```
+<span style="font-size: 20px;">
+$P(x) = \frac{1}{Z} e^{\sum_i f_i(x)}$
+
+e.g.
+
+$f_i(x) = \frac{1}{N}\sum_i x$
+</span>
+</div>
+
+
+## SDM and maxent
+
+## MaxEnt and MacroEco
+
+## *meteR*
+
+## goodness of fit and *pika*, looking forward
