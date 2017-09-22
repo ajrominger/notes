@@ -13,7 +13,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-<!---
+
 ## {.columns-2}
 
 ```{r, fig.width=4, fig.height=6}
@@ -86,7 +86,6 @@ plot(exp(2:9), seq(3, 100, length.out = 8), log = 'xy', axes = FALSE, frame.plot
 logAxis(1)
 logAxis(2)
 ```
--->
 
 ##
 <span style="font-size: 40px; color: #FFFFFF">Maximum Entropy</span>
@@ -127,7 +126,6 @@ axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
 <span style="font-size: 40px; color: #515151">Maximum Entropy</span>
 <br/>
 <br/>
-<div>
 ```{r, fig.height=2, fig.width=3, fig.align='center'}
 par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0))
 plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1), xlab = 'x', ylab = 'Probability', 
@@ -137,13 +135,13 @@ segments(x0 = c(0.1, 0.1, 0.9), x1 = c(0.1, 0.9, 0.9),
          y0 = c(0, 0.5, 0.5), y1 = c(0.5, 0.5, 0), col = 'gray25', 
          lwd = 4)
 ```
-<span style="font-size: 20px;">
+
+<div style="font-size: 20px;">
 $P(x) = \frac{1}{Z} e^{\sum_i f_i(x)}$
 
 e.g.
 
-$f_i(x) = \frac{1}{N}\sum_i x$
-</span>
+$E[f_i(x)] = \frac{1}{N}\sum_i x$
 </div>
 
 
