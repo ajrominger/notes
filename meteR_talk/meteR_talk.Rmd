@@ -75,8 +75,9 @@ points(x, y)
 
 ```{r, fig.width=4, fig.height=2.5}
 library(socorro)
+library(meteR)
 set.seed(1)
-x <- pika::rfish(100, 0.01)
+x <- sad(meteESF(S0 = 100, N0 = 1000))$r(100)
 par(mar = c(3, 3, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0), mfrow = c(1, 2))
 plot(sort(x, TRUE), log = 'y', yaxt = 'n', xlab = 'Rank', ylab = 'Abundance')
 logAxis(2)
@@ -87,11 +88,7 @@ logAxis(1)
 logAxis(2)
 ```
 
-##
-<span style="font-size: 40px; color: #FFFFFF">Maximum Entropy</span>
-<br/>
-<br/>
-<br/>
+## <span style="color: #FFFFFF">Maximum Entropy</span>
 ```{r, fig.height=3, fig.width=3, fig.align='center'}
 par(mar = c(3, 3, 0, 0), mgp = c(1, 0, 0))
 curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability', 
@@ -99,11 +96,7 @@ curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability',
 ```
 
 
-## 
-<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
-<br/>
-<br/>
-<br/>
+## Maximum Entropy
 ```{r, fig.height=3, fig.width=3, fig.align='center'}
 par(mar = c(3, 3, 0, 0), mgp = c(1, 0, 0))
 curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability', 
@@ -111,44 +104,168 @@ curve(dgamma(x, 3, 1), from = 0, to = 10, xlab = 'x', ylab = 'Probability',
 ```
 
 
-## {.columns-2}
-<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
-<br/>
-<br/>
-```{r, fig.height=2, fig.width=3, fig.align='center'}
-par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0))
+## Maximum Entropy
+```{r, fig.align='center', fig.width=7, fig.height=6}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0), mfcol = c(2, 2))
 plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1.5), xlab = 'x', ylab = 'Probability', 
      axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
 axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
 ```
 
-## {.columns-2}
-<span style="font-size: 40px; color: #515151">Maximum Entropy</span>
-<br/>
-<br/>
-```{r, fig.height=2, fig.width=3, fig.align='center'}
-par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0))
-plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1), xlab = 'x', ylab = 'Probability', 
-     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25', yaxs = 'i')
+## Maximum Entropy
+```{r, fig.align='center', fig.width=7, fig.height=6}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0), mfcol = c(2, 2))
+plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1.5), xlab = 'x', ylab = 'Probability', 
+     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
 axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
 segments(x0 = c(0.1, 0.1, 0.9), x1 = c(0.1, 0.9, 0.9), 
          y0 = c(0, 0.5, 0.5), y1 = c(0.5, 0.5, 0), col = 'gray25', 
          lwd = 4)
 ```
 
-<div style="font-size: 20px;">
-$P(x) = \frac{1}{Z} e^{\sum_i f_i(x)}$
+## Maximum Entropy
+```{r, fig.align='center', fig.width=7, fig.height=6}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0), mfcol = c(2, 2))
+plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1.5), xlab = 'x', ylab = 'Probability', 
+     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
+axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
+segments(x0 = c(0.1, 0.1, 0.9), x1 = c(0.1, 0.9, 0.9), 
+         y0 = c(0, 0.5, 0.5), y1 = c(0.5, 0.5, 0), col = 'gray25', 
+         lwd = 4)
 
-e.g.
+foo <- jpeg::readJPEG('maxent_eq.jpg', native = TRUE)
+par(mar = c(2, 3, 0, 2))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+```
 
-$E[f_i(x)] = \frac{1}{N}\sum_i x$
-</div>
+## Maximum Entropy
+```{r, fig.align='center', fig.width=7, fig.height=6}
+par(mar = c(3, 3, 0, 0), mgp = c(1.5, 0.5, 0), mfcol = c(2, 2))
+plot(1, type = 'n', xlim = 0:1, ylim = c(0, 1.5), xlab = 'x', ylab = 'Probability', 
+     axes = FALSE, frame.plot = TRUE, lwd = 4, col = 'gray25')
+axis(1, at = c(0.1, 0.9), labels = c('a', 'b'))
+segments(x0 = c(0.1, 0.1, 0.9), x1 = c(0.1, 0.9, 0.9), 
+         y0 = c(0, 0.5, 0.5), y1 = c(0.5, 0.5, 0), col = 'gray25', 
+         lwd = 4)
 
+# foo <- jpeg::readJPEG('maxent_eq.jpg', native = TRUE)
+par(mar = c(2, 3, 0, 2))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
 
-## SDM and maxent
+set.seed(2)
+env <- MASS::kde2d(rnorm(500, c(rep(0, 100), rep(3, 200), rep(5, 200))), 
+                   rnorm(500, c(rep(1, 250), rep(1, 50), rep(5, 300))))
+env$z <- env$z
 
-## MaxEnt and MacroEco
+par(mar = c(3, 1, 0, 0.5))
+image(env, col = viridis::viridis(50), axes = FALSE, frame.plot = TRUE)
+set.seed(3)
+pnts <- which(array(1:prod(dim(env$z)) %in% sample(prod(dim(env$z)), 20, 
+                                                   prob = as.vector(env$z)), 
+                    dim = dim(env$z)), 
+              arr.ind = TRUE)
+points(cbind(env$x[pnts[, 1]], env$y[pnts[, 2]]), pch = 21, col = 'white', bg = 'black')
+
+foo <- jpeg::readJPEG('maxent_eq2.jpg', native = TRUE)
+par(mar = c(2, 1, 0, 0.5))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+```
+
+## Maximum Entropy and Macroecology
+![](~/Dropbox/Research/meteR/vignettes/METE_Fig.png)
+
+## The core of METE {.columns-2}
+Ecosystem structure function (**ESF**)
+$$
+R(n, \varepsilon \mid S_0, N_0, E_0) = \text{joint prob of abundance and metab rate}
+$$
+Species abundance and metabolic rate distributions follow
+
+Spatial structure function (**SSF**)
+$$
+\Pi(n_i \mid N_0, n_0, A_0, A) = \text{prob of abundance in cell of size } A
+$$
+Spatial abundance distribution and species area relationship follow
 
 ## *meteR*
+```{r, fig.width=8, fig.height=5, fig.align='center'}
+foo <- jpeg::readJPEG('meteR_workflow.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+```
+
+## *meteR*: Data + Core
+```{r, echo=TRUE}
+library(meteR)
+data(arth)
+head(arth)
+arthESF <- meteESF(spp = arth$spp, abund = arth$count, 
+                   power = arth$mass^0.75)
+arthESF # this is the print method
+```
+
+## *meteR*: Data + Core
+```{r, echo = TRUE}
+length(unique(arth$spp))
+sum(arth$count)
+sum(arth$mass^0.75 / min(arth$mass^0.75))
+arthESF_stateVar <- meteESF(S0 = 76, N0 = 547, E0 = 15868.26)
+```
+
+## *meteR*: Data + Core
+```{r, echo = TRUE}
+data(anbo)
+head(anbo)
+
+anboSSF <- meteSSF(spp = anbo$spp, sppID = 'gnwe', 
+                   abund = anbo$count, row = anbo$row, 
+                   col = anbo$column, A = 1, A0 = 16)
+anboSSF
+```
+
+## *meteR*: Prediction + Analysis
+```{r, echo = TRUE, eval=FALSE}
+arthSAD <- sad(arthESF)
+plot(arthSAD, ptype = 'rad')
+```
+```{r, fig.width=2.5, fig.height=2.5, fig.align='center'}
+arthSAD <- sad(arthESF)
+par(mar = c(2.5, 2.5, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0))
+plot(arthSAD, ptype = 'rad', log = 'y', yaxt = 'n')
+logAxis(2)
+```
+```{r, echo = TRUE}
+logLik(arthSAD)
+```
+
+## *meteR*: Prediction + Analysis
+```{r, echo=TRUE, eval=FALSE}
+anboSAR <- meteSAR(spp = anbo$spp, abund = anbo$count, 
+                   row = anbo$row, col = anbo$col, 
+                   Amin = 1, A0 = 16)
+plot(anboSAR)
+```
+```{r, fig.width=2.5, fig.height=2.5, fig.align='center'}
+anboSAR <- meteSAR(spp = anbo$spp, abund = anbo$count, 
+                   row = anbo$row, col = anbo$col, 
+                   Amin = 1, A0 = 16)
+par(mar = c(2.5, 2.5, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0))
+plot(anboSAR, log = 'xy', axes = FALSE, frame.plot = TRUE, add.legend = FALSE)
+```
+```{r, fig.width=2.5, fig.height=2.5, fig.align='center', echo=TRUE}
+mse(anboSAR)
+```
 
 ## goodness of fit and *pika*, looking forward
