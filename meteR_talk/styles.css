@@ -26,9 +26,14 @@ aside.gdbar {
 }
 
 /* make code chunks centered and take up full width of slide */
+/* also smaller font */
 pre {
+  font-size: 18px;
+  line-height: 24px;    
   width: 100%;
   left: 0;
+  margin-bottom: 15px;
+  padding: 10px 0 10px 10px;
 }
 
 /* make slides one color */

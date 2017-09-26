@@ -184,17 +184,102 @@ rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
 ![](~/Dropbox/Research/meteR/vignettes/METE_Fig.png)
 
 ## The core of METE {.columns-2}
+<div style="font-size: 22px">
 Ecosystem structure function (**ESF**)
-$$
-R(n, \varepsilon \mid S_0, N_0, E_0) = \text{joint prob of abundance and metab rate}
-$$
+```{r, fig.width=3.5, fig.height=1, fig.align='left'}
+foo <- jpeg::readJPEG('esf.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+```
 Species abundance and metabolic rate distributions follow
 
+
 Spatial structure function (**SSF**)
-$$
-\Pi(n_i \mid N_0, n_0, A_0, A) = \text{prob of abundance in cell of size } A
-$$
+```{r, fig.width=3, fig.height=1, fig.align='left'}
+foo <- jpeg::readJPEG('ssf.jpg', native = TRUE)
+par(mar = rep(0, 4))
+plot(1, axes = FALSE, type = 'n',
+     xlim = c(0, dim(foo)[2]), ylim = c(0, dim(foo)[1]),
+     xlab = '', ylab = '', asp = 1)
+rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
+```
 Spatial abundance distribution and species area relationship follow
+</div>
+
+## Why theory?
+
+## Why theory?
+```{r, fig.width=4, fig.height=4, fig.align='center'}
+scaleC.thr <- read.csv('~/Research/talks/esaIgnite_2013/scaleCollapseThr.csv')
+scaleC.dat <- read.csv('~/Research/talks/esaIgnite_2013/scaleCollapseData.csv')
+
+f1 <- splinefun(exp(scaleC.thr[, 1]), scaleC.thr[, 2])
+f2 <- approxfun(exp(scaleC.thr[, 1]), scaleC.thr[, 2])
+
+scaleCFun <- function(x) {
+    y <- numeric(length(x))
+    y[x <= 3] <- f1(x[x <= 3])
+    y[x > 3] <- f2(x[x > 3])
+    
+    return(y)
+}
+
+x1 <- runif(100)
+x2 <- runif(100, scaleCFun(2000), scaleCFun(1))
+
+par(mar = rep(0.1, 4), cex = 1.3, lwd = 1.2, mgp = c(1.75, 0.5, 0))
+plot(x1, x2, axes = FALSE, frame.plot = TRUE)
+```
+
+## Why theory?
+```{r, fig.width=4, fig.height=4, fig.align='center'}
+par(mar = rep(0.1, 4), cex = 1.3, lwd = 1.2, mgp = c(1.75, 0.5, 0))
+plot(x1, x2, axes = FALSE, frame.plot = TRUE, 
+     col = quantCol(x2, pal = viridis::inferno(20)))
+```
+
+## Why theory?
+```{r, fig.width=6, fig.height=4.5, fig.align='center'}
+par(mar = c(2.5, 2.5, 0.5, 0.5) + 0.1, cex = 1.3, lwd = 1.2, mgp = c(1.75, 0.5, 0))
+
+plot(exp(scaleC.dat[, 1]), scaleC.dat[, 2], log = 'x', xaxt = 'n', xlab='', ylab='', 
+     type = 'n')
+
+NoverS <- c(exp(seq(log(1), log(20), length.out = 500)), 
+            seq(21, 2000, length.out = 200))
+
+for(i in 2:length(NoverS)) {
+    segments(x0 = NoverS[i-1], x1 = NoverS[i], 
+             y0 = scaleCFun(NoverS[i-1]), 
+             y1 = scaleCFun(NoverS[i]), 
+             col = quantCol(scaleCFun(NoverS[i-1]), pal = viridis::inferno(20), 
+                            xlim = range(scaleCFun(c(1, 2000)))), 
+             lwd = 3)
+}
+
+logAxis(1)
+```
+
+## Why theory?
+```{r, fig.width=6, fig.height=4.5, fig.align='center'}
+par(mar = c(2.5, 2.5, 0.5, 0.5) + 0.1, cex = 1.3, lwd = 1.2, mgp = c(1.75, 0.5, 0))
+
+plot(exp(scaleC.dat[, 1]), scaleC.dat[, 2], log = 'x', xaxt = 'n', xlab='N/S', ylab='z')
+
+for(i in 2:length(NoverS)) {
+    segments(x0 = NoverS[i-1], x1 = NoverS[i], 
+             y0 = scaleCFun(NoverS[i-1]), 
+             y1 = scaleCFun(NoverS[i]), 
+             col = quantCol(scaleCFun(NoverS[i-1]), pal = viridis::inferno(20), 
+                            xlim = range(scaleCFun(c(1, 2000)))), 
+             lwd = 3)
+}
+
+logAxis(1)
+```
 
 ## *meteR*
 ```{r, fig.width=8, fig.height=5, fig.align='center'}
@@ -206,14 +291,33 @@ plot(1, axes = FALSE, type = 'n',
 rasterImage(foo, 0, 0, dim(foo)[2], dim(foo)[1])
 ```
 
+## *meteR*
+```{r, echo=TRUE, eval=FALSE}
+install.packages('meteR') # we're live on CRAN!
+devtools::install_github('cmerow/meteR') # dev version
+library(meteR)
+```
+
 ## *meteR*: Data + Core
 ```{r, echo=TRUE}
-library(meteR)
 data(arth)
-head(arth)
+head(arth, n = 3)
+```
+
+## *meteR*: Data + Core
+```{r, echo=TRUE}
+data(arth)
+head(arth, n = 3)
 arthESF <- meteESF(spp = arth$spp, abund = arth$count, 
                    power = arth$mass^0.75)
 arthESF # this is the print method
+```
+
+## *meteR*: Data + Core
+```{r, echo = TRUE}
+length(unique(arth$spp))
+sum(arth$count)
+sum(arth$mass^0.75 / min(arth$mass^0.75))
 ```
 
 ## *meteR*: Data + Core
@@ -227,12 +331,35 @@ arthESF_stateVar <- meteESF(S0 = 76, N0 = 547, E0 = 15868.26)
 ## *meteR*: Data + Core
 ```{r, echo = TRUE}
 data(anbo)
-head(anbo)
+head(anbo, n = 3)
+```
+
+## *meteR*: Data + Core
+```{r, echo = TRUE}
+data(anbo)
+head(anbo, n = 3)
 
 anboSSF <- meteSSF(spp = anbo$spp, sppID = 'gnwe', 
                    abund = anbo$count, row = anbo$row, 
                    col = anbo$column, A = 1, A0 = 16)
 anboSSF
+```
+
+## *meteR*: Prediction + Analysis
+```{r, echo = TRUE, eval=FALSE}
+arthSAD <- sad(arthESF)
+```
+
+## *meteR*: Prediction + Analysis
+```{r, echo = TRUE, eval=FALSE}
+arthSAD <- sad(arthESF)
+plot(arthSAD, ptype = 'rad')
+```
+```{r, fig.width=2.5, fig.height=2.5, fig.align='center'}
+arthSAD <- sad(arthESF)
+par(mar = c(2.5, 2.5, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0))
+plot(arthSAD, ptype = 'rad', log = 'y', yaxt = 'n')
+logAxis(2)
 ```
 
 ## *meteR*: Prediction + Analysis
@@ -248,6 +375,21 @@ logAxis(2)
 ```
 ```{r, echo = TRUE}
 logLik(arthSAD)
+```
+
+## *meteR*: Prediction + Analysis
+```{r, echo=TRUE, eval=FALSE}
+anboSAR <- meteSAR(spp = anbo$spp, abund = anbo$count, 
+                   row = anbo$row, col = anbo$col, 
+                   Amin = 1, A0 = 16)
+plot(anboSAR)
+```
+```{r, fig.width=2.5, fig.height=2.5, fig.align='center'}
+anboSAR <- meteSAR(spp = anbo$spp, abund = anbo$count, 
+                   row = anbo$row, col = anbo$col, 
+                   Amin = 1, A0 = 16)
+par(mar = c(2.5, 2.5, 0, 0) + 0.1, mgp = c(1.5, 0.5, 0))
+plot(anboSAR, log = 'xy', axes = FALSE, frame.plot = TRUE, add.legend = FALSE)
 ```
 
 ## *meteR*: Prediction + Analysis
