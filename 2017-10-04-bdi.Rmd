@@ -1,0 +1,202 @@
+---
+title: "Simulating birth-death-immigration processes"
+author: "A. J. Rominger"
+date: "10/4/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I'm working on figuring this out.  Rough ideas right now about how to do it.  Below are three different attempts, the first two seemingly wrong mathematically, the second taken from Bailey, 1964 and Bolker, 2007, thus seemingly seems to be mathematically correct, but yeilds results that I'm not sure about (lots of immigrants very quickly).
+
+## Attempt one
+
+Assumes each event in each time step is competed for by all $n_J$ species
+
+```{r, fig.width=4, fig.height=4, fig.align='center'}
+library(pika)
+
+## the metacommunity
+b <- 0.01
+nJ <- 500
+# J <- rfish(nJ, 0.01)
+J <- rep(1, nJ)
+J <- J / sum(J)
+
+## the local community
+nTime <- 50000
+
+## initialization
+x <- matrix(0, nrow = nJ, ncol = nTime)
+x[sample(1:nJ, 1, prob = J), 1] <- 1
+
+## rates: mu > lambda + nu
+mu <- 1
+lambda <- 1
+nu <- 0.1
+
+## the simulation
+sim <- lapply(2:nTime, function(i) {
+    thisX <- x[, i-1]
+    
+    event <- sample(1:3, 1, prob = c(c(mu, lambda) * sum(thisX), nu))
+    if(event == 1) {
+        spID <- sample(1:nJ, 1, prob = thisX)
+        thisX[spID] <- thisX[spID] - 1
+    } else if(event == 2) {
+        spID <- sample(1:nJ, 1, prob = thisX)
+        thisX[spID] <- thisX[spID] + 1
+    } else {
+        spID <- sample(1:nJ, 1, prob = J)
+        thisX[spID] <- thisX[spID] + 1
+    }
+    
+    x[, i] <<- thisX
+    
+    return(NULL)
+})
+
+
+foo <- rowSums(x)
+foo <- foo[foo > 0]
+plot(sort(foo, TRUE), log = 'y')
+
+i <- order(rowSums(x), decreasing = TRUE)
+plot(x[i[4], ], type = 'l')
+plot(colSums(x), type = 'l')
+```
+
+## Attempt two
+
+Assumes all species have independent dynamics, but uses a poor approximation for combining immigration process with birth-death.
+
+I'm not running the below code because it takes a while, but the issue is that the local community goes completely extinct for the majority of the time.
+
+```{r, eval=FALSE}
+library(pika)
+
+## helper function to take time and pop size and return pop size at fixed intervals
+interp <- function(tt, x, slices) {
+    newx <- sapply(split(x, cut(tt, slices)), function(xi) {
+        out <- xi[length(xi)]
+        if(length(out) == 0) out <- NA
+        
+        return(out)
+    })
+    
+    names(newx) <- NULL
+    
+    i <- which(!is.na(newx))
+    if(is.na(newx[1])) i <- c(1, i)
+    
+    ## fill in missing with last non-na value
+    out <- rep(newx[i], times = diff(c(i, length(newx) + 1)))
+    out[is.na(out)] <- 0
+    
+    return(out)
+}
+
+
+## the metacommunity
+b <- 0.01
+nJ <- 100
+J <- rfish(nJ, b)
+J <- nJ * J / sum(J)
+
+
+## initialization
+x <- numeric(nJ)
+# x[sample(1:nJ, 1, prob = J)] <- 1
+x[1] <- 1
+maxTime <- 5000
+timeSlice <- seq(-100, maxTime, 100)
+
+## rates. note: nu is imm rate of avg spp in metacomm, because average value in J is 1
+mu <- 1
+lambda <- 1
+nu <- 0.1
+
+sim <- lapply(1:nJ, function(i) {
+    nImm <- rpois(1, nu * J[i] * maxTime)
+    if(x[i] > 0) nImm <- nImm + 1
+    
+    if(nImm > 0) {
+        imm <- runif(nImm, 0, maxTime) # immigration times
+        if(x[i] > 0) imm[1] <- 0
+        
+        out <- lapply(imm, function(immTime) {
+            thisX <- cumsum(c(1, sample(c(-1, 1), round(maxTime * (mu + lambda) * 100), 
+                                        replace = TRUE, prob = c(mu, lambda))))
+            if(!any(thisX == 0)) {
+                ext <- sample(length(thisX), 1, prob = 1/thisX)
+                thisX[ext] <- 0
+            }
+            
+            thisX <- thisX[1:which(thisX == 0)[1]]
+            thisT <- cumsum(c(immTime, rexp(length(thisX) - 1, 
+                                            (lambda + mu) * thisX[-length(thisX)])))
+            
+            return(interp(thisT, thisX, timeSlice))
+        })
+        
+        out <- rowSums(do.call(cbind, out))
+    } else {
+        out <- rep(0, length(timeSlice) - 1)
+    }
+    
+    return(out)
+})
+
+sim <- do.call(rbind, sim)
+
+par(mar = c(3, 3, 0, 0) + 0.5, mgp = c(1.75, 0.5, 0))
+plot(colSums(sim), type = 'l', xlab = 'Iterations', ylab = 'Total community abundance')
+```
+
+
+## Attempt three
+
+Just a negative binomial sampling process.
+
+```{r, fig.width=4, fig.height=4, fig.align='center'}
+library(pika)
+library(viridis)
+library(socorro)
+
+## function to simulate birth-death-immigration process starting at X(t = 0) = 0
+rbdi <- function(n, lambda, mu, nu, t) {
+    rnbinom(n, size = nu/lambda, mu = nu / (lambda - mu) * (exp((lambda - mu) * t) - 1))
+}
+
+## metacommunity parameters
+b <- 0.01
+nJ <- 500
+J <- rfish(nJ, b)
+# J <- rep(1, nJ)
+J <- nJ * J / sum(J)
+
+## local community parameters
+lambda <- 1
+mu <- 1.0001
+nu <- 0.05 # imm for avg spp in metacomm
+
+## times to simulate
+tt <- exp(seq(log(10), log(200000), length.out = 7))
+
+
+sim <- lapply(tt, function(ti) {
+    out <- replicate(500, sort(rbdi(nJ, lambda, mu, nu * J, ti), decreasing = TRUE))
+    return(cbind(m = rowMeans(out), t(apply(out, 1, quantile, probs = c(0.025, 0.975)))))
+})
+
+par(mar = c(3, 3, 0, 0) + 0.5, mgp = c(1.75, 0.5, 0))
+plot(sim[[1]][sim[[1]][, 1] > 0, 1], log = 'y', xlim = c(0, 155), ylim = c(1e-03, 50000), 
+     col = viridis(length(tt))[1], yaxt = 'n', 
+     xlab = 'Rank', ylab = 'Mean abundance')
+for(i in 2:length(tt)) points(sim[[i]][sim[[i]][, 1] > 0, 1], col = viridis(length(tt))[i])
+logAxis(2, expLab = TRUE)
+```
+
+The time evolution of these SADs goes from early (purple) to late (yellow).
