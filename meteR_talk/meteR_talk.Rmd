@@ -411,7 +411,8 @@ mse(anboSAR)
 
 - *pika* package to integrate quantitative macroecology
     - standardized goodness of fit
-    - more than just SAD, SAD, metabolism
+    - more than just SAD, SAR, metabolism
+    - will be on CRAN and module in *Wallace*
 - *meteR* (and/or *pika*) to facilitate self-publishing of data and analyses
 
 ## {.flexbox .vcenter}
