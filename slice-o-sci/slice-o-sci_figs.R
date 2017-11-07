@@ -57,3 +57,21 @@ segments(x0 = xMean[-nMean], y0 = yMean[-nMean],
 segments(x0 = xPop[-nMean], y0 = yPop[-nMean], 
          x1 = xPop[-1], y1 = yPop[-1], col = magma(nMean), lwd = 3)
 dev.off()
+
+
+
+
+library(alphashape3d)
+
+x <- matrix(rnorm(300), ncol = 3)
+alpha <- 10
+ashape3d.obj <- ashape3d(x, alpha = alpha)
+plot(ashape3d.obj, col = rep(hsv(0.4, 0.5, 0.7), 3))
+rgl.postscript('fig_femaleHull.pdf', fmt = 'pdf')
+
+
+x <- matrix(rnorm(300, sd = 3), ncol = 3)
+alpha <- 5
+ashape3d.obj <- ashape3d(x, alpha = alpha)
+plot(ashape3d.obj, col = rep(hsv(0.12, 0.7, 0.6), 3))
+rgl.postscript('fig_maleHull.pdf', fmt = 'pdf')
