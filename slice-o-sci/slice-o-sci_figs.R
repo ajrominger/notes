@@ -75,3 +75,29 @@ alpha <- 5
 ashape3d.obj <- ashape3d(x, alpha = alpha)
 plot(ashape3d.obj, col = rep(hsv(0.12, 0.7, 0.6), 3))
 rgl.postscript('fig_maleHull.pdf', fmt = 'pdf')
+
+
+library(meteR)
+
+psi <- function(x, la1, la2) {
+    sum(log(la2 * (la1 + la2) * exp(-la1 - la2 * x) / (1 - exp(-la1 - la2 * x))^2))
+}
+
+esf <- meteESF(S0 = 20, N0 = 200, E0 = 8000)
+x <- meteDist2Rank(ipd(esf))
+plot(x)
+
+La <- as.matrix(expand.grid(la1 = seq(0.005, 0.09, length.out = 40), 
+                            la2 = seq(0.001, 0.01, length.out = 40)))
+
+mle <- sapply(1:nrow(La), function(i) {
+    psi(x, La[i, 1], La[i, 2])
+})
+
+pdf('fig_psiFit.pdf', width = 4, height = 4)
+par(mar = c(3, 3, 0.4, 0.4) + 0.5, mgp = c(2, 0.5, 0), cex.lab = 1.5)
+image(unique(La[, 1]), unique(La[, 2]), matrix(mle, nrow = 40), col = plasma(50), 
+      xlab = expression(lambda[1]), ylab = expression(lambda[2]))
+contour(unique(La[, 1]), unique(La[, 2]), matrix(mle, nrow = 40), add = TRUE, 
+        labels = '', labcex = 0.1)
+dev.off()
