@@ -101,3 +101,29 @@ image(unique(La[, 1]), unique(La[, 2]), matrix(mle, nrow = 40), col = plasma(50)
 contour(unique(La[, 1]), unique(La[, 2]), matrix(mle, nrow = 40), add = TRUE, 
         labels = '', labcex = 0.1)
 dev.off()
+
+
+## xy of plants
+bci <- read.csv('../../MaxEnt_MaxHeight/ctfs_data/BCIS.csv', as.is = TRUE)
+
+pdf('fig_orgXY.pdf', width = 4, height = 3)
+par(mfrow = c(2, 2), mar = rep(0.1, 4), xaxt = 'n', yaxt = 'n')
+plot(bci[bci$spp == 'SOROAF', c('x', 'y')], pch = 16, cex = 0.5)
+plot(bci[bci$spp == 'TALINE', c('x', 'y')], pch = 16, cex = 0.5)
+plot(bci[bci$spp == 'LACMPA', c('x', 'y')], pch = 16, cex = 0.5)
+plot(bci[bci$spp == 'INGAPU', c('x', 'y')], pch = 16, cex = 0.5)
+dev.off()
+
+xy <- expand.grid(1:4, 1:3)
+ones <- numeric(nrow(xy))
+ones[sample(length(ones), 4)] <- 1
+ones[ones == 0] <- -1
+plot(xy[ones == 1, ], pch = 16, cex = 2, 
+     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5))
+abline(v = (1:5) - 0.5, h = (1:4) - 0.5)
+
+plot(xy, type = 'n', 
+     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5))
+abline(v = (1:5) - 0.5, h = (1:4) - 0.5)
+
+text(xy, labels = ones, cex = 3)
