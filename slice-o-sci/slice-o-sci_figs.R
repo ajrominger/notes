@@ -231,3 +231,11 @@ mtext('No. species', side = 2, line = 2.25, cex = 1.5)
 plot(tre, show.tip.label = FALSE)
 
 dev.off()
+
+## limited individuals
+xy <- jitter(as.matrix(expand.grid(1:10, 1:10)), factor = 3)
+
+pdf('fig_limitedNBlack.pdf', width = 4, height = 4)
+par(mar = rep(0.1, 4))
+plot(xy, axes = FALSE, frame.plot = TRUE, pch = 16, cex = 1.2)
+dev.off()
