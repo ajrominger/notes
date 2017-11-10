@@ -1,0 +1,18 @@
+---
+title: "Quadratic time in evolution"
+author: "A. J. Rominger"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+tags: equilibrium diversification evo-ecology
+output: 
+  md_document:
+    variant: markdown_github
+bibliography: notes.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Several models of diversification include a quadratic term for time [@whittaker2008, @lim2017]. This is phenomenological at best and model misspecification at worst.  Phenomenological because the real argument is that what controls speciation and extinction (namely habitat area) is itself approximately quadratic in time.  So here, time should be linear, but the rates should vary with area.  The misspecification from from the other argument for quadratic time, which is that species compete under a carrying capacity that changes again with area. To model this correctly, time again needs to be linear and carrying capacity needs to change (linearly) with area.
+
+Quadratic time implies something different entirely.  It implies species compete for *time*, which could be best thought of as the system being fixed by an upper carrying capacity and limited by *innovation*.
