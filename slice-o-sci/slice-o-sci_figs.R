@@ -114,16 +114,101 @@ plot(bci[bci$spp == 'LACMPA', c('x', 'y')], pch = 16, cex = 0.5)
 plot(bci[bci$spp == 'INGAPU', c('x', 'y')], pch = 16, cex = 0.5)
 dev.off()
 
+## xy to grid
 xy <- expand.grid(1:4, 1:3)
 ones <- numeric(nrow(xy))
 ones[sample(length(ones), 4)] <- 1
 ones[ones == 0] <- -1
-plot(xy[ones == 1, ], pch = 16, cex = 2, 
-     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5))
-abline(v = (1:5) - 0.5, h = (1:4) - 0.5)
 
+pdf('fig_detailXY1.pdf', width = 4, height = 3)
+par(mar = rep(0.1, 4))
+plot(xy[ones == 1, ], pch = 16, cex = 2, 
+     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5), 
+     axes = FALSE)
+dev.off()
+
+pdf('fig_detailXY2.pdf', width = 4, height = 3)
+par(mar = rep(0.1, 4))
+plot(xy[ones == 1, ], pch = 16, cex = 2, 
+     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5), 
+     axes = FALSE)
+abline(v = (1:5) - 0.5, h = (1:4) - 0.5)
+dev.off()
+
+pdf('fig_detailXY3.pdf', width = 4, height = 3)
+par(mar = rep(0.1, 4))
 plot(xy, type = 'n', 
-     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5))
+     xlim = range(xy[, 1]) + c(-0.5, 0.5), ylim = range(xy[, 2]) + c(-0.5, 0.5), 
+     axes = FALSE)
 abline(v = (1:5) - 0.5, h = (1:4) - 0.5)
 
 text(xy, labels = ones, cex = 3)
+dev.off()
+
+library(raster)
+
+r <- raster(ncol = 12, nrow = 8, xmn = 0, xmx = 12, ymn = 0, ymx = 8)
+r[] <- 0
+r[sample(prod(dim(r)), round(prod(dim(r)) * 0.1))] <- 1
+
+pdf('fig_aggregate1.pdf', width = 12/3, height = 8/3, fillOddEven = FALSE)
+par(mar = rep(0.1, 4))
+image(r, col = c('white', 'black'), axes = FALSE, frame.plot = TRUE, 
+      useRaster = FALSE)
+dev.off()
+
+r2 <- aggregate(r, fact = 2, fun = max)
+pdf('fig_aggregate2.pdf', width = 12/3, height = 8/3, fillOddEven = FALSE)
+par(mar = rep(0.1, 4))
+image(r2, col = c('white', 'black'), axes = FALSE, frame.plot = TRUE, 
+      useRaster = FALSE)
+dev.off()
+
+r4 <- aggregate(r, fact = 4, fun = max)
+pdf('fig_aggregate3.pdf', width = 12/3, height = 8/3, fillOddEven = FALSE)
+par(mar = rep(0.1, 4))
+image(r4, col = c('white', 'black'), axes = FALSE, frame.plot = TRUE, 
+      useRaster = FALSE)
+dev.off()
+
+
+## character displacement
+library(socorro)
+
+pdf('fig_charDisplace1.pdf', width = 4, height = 4)
+par(mar = c(2.5, 2.5, 2.5, 0.5), cex.lab = 1.5, mgp = c(1, 1, 0))
+curve(dnorm(x), xlim = c(-4, 7), xlab = 'Some trait', ylab = 'Fitness', 
+      from = -4, to = 4,
+      col = hsv(0.6, 0.8, 0.7), lwd = 3, 
+      panel.first = polygon(x = c(seq(-1, 1.5, length.out = 20), 
+                                  seq(1.5, 4, length.out = 20), -1), 
+                            y = dnorm(c(seq(-1, 1.5, length.out = 20), 
+                                        seq(1.5, 4, length.out = 20), -1), 
+                                      mean = rep(c(3, 0, 3), c(20, 20, 1))), 
+                            border = NA, col = 'gray'),
+      xaxt = 'n', yaxt = 'n')
+
+curve(dnorm(x, mean = 3), add = TRUE, 
+      from = -1, to = 7,
+      col = hsv(0.1, 0.7, 0.9), lwd = 3)
+
+axisArrows(2, length = 0.1, lwd = 1.5)
+mtext(c('Sp 1', 'Sp2'), at = c(0, 3), col =  hsv(c(0.6, 0.1), c(0.8, 0.7), c(0.7, 0.9)), 
+      cex = 1.2, line = 0.5)
+
+dev.off()
+
+pdf('fig_charDisplace2.pdf', width = 4, height = 4)
+par(mar = c(2.5, 2.5, 2.5, 0.5), cex.lab = 1.5, mgp = c(1, 1, 0))
+curve(dnorm(x, sd = 0.5), xlim = c(-4, 7), xlab = 'Some trait', ylab = 'Fitness', 
+      from = -4, to = 4,
+      col = hsv(0.6, 0.8, 0.7), lwd = 3, xaxt = 'n', yaxt = 'n')
+curve(dnorm(x, mean = 3, sd = 0.5), add = TRUE, 
+      from = -1, to = 7,
+      col = hsv(0.1, 0.7, 0.9), lwd = 3)
+
+axisArrows(2, length = 0.1, lwd = 1.5)
+mtext(c('Sp 1', 'Sp2'), at = c(0, 3), col =  hsv(c(0.6, 0.1), c(0.8, 0.7), c(0.7, 0.9)), 
+      cex = 1.2, line = 0.5)
+
+dev.off()
