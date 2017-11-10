@@ -212,3 +212,22 @@ mtext(c('Sp 1', 'Sp2'), at = c(0, 3), col =  hsv(c(0.6, 0.1), c(0.8, 0.7), c(0.7
       cex = 1.2, line = 0.5)
 
 dev.off()
+
+
+## resultant diversification
+library(ape)
+b <- function(t) 1/(1 + exp(0.2*t - 1))
+curve(b(x), to = 50, from = 0)
+set.seed(1)
+tre <- rbdtree(birth = b, death = 0.07)
+
+pdf('fig_div.pdf', width = 5, height = 6)
+layout(matrix(1:2, nrow = 2), heights = c(1, 2))
+par(mar = c(0.5, 3.5, 0.5, 0.5), cex.lab = 1.5, mgp = c(1, 1, 0))
+curve(50/(1 + exp(-0.2*x + 1)), from = 0, to = 50, 
+      xaxt = 'n', xlab = '', ylab = '', lwd = 3)
+mtext('No. species', side = 2, line = 2.25, cex = 1.5)
+
+plot(tre, show.tip.label = FALSE)
+
+dev.off()
