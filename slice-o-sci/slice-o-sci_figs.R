@@ -239,3 +239,21 @@ pdf('fig_limitedNBlack.pdf', width = 4, height = 4)
 par(mar = rep(0.1, 4))
 plot(xy, axes = FALSE, frame.plot = TRUE, pch = 16, cex = 1.2)
 dev.off()
+
+
+xy2 <- jitter(as.matrix(expand.grid(seq(1.5, 9.5, length.out = 6), 
+                                    seq(1.5, 9.5, length.out = 6))), 
+              factor = 3)
+
+pdf('fig_limitedNRedBlue.pdf', width = 4, height = 4)
+par(mar = rep(0.1, 4))
+plot(xy, axes = FALSE, frame.plot = TRUE, pch = 16, cex = 1.2, col = 'blue')
+points(xy2, pch = 16, cex = 1.2, col = 'red')
+dev.off()
+
+pdf('fig_limitedNPurp.pdf', width = 4, height = 4)
+par(mar = rep(0.1, 4))
+plot(xy, axes = FALSE, frame.plot = TRUE, pch = 16, cex = 1.2, col = 'purple')
+points(xy2, pch = 16, cex = 1.2, col = 'purple')
+dev.off()
+
