@@ -1,5 +1,7 @@
 library(parallel)
 
+setwd('~/Dropbox/Research/notes/islandDiv')
+
 ## function to simulate island evolution by linear birth-death-immigration
 islandSim <- function(ages, maxAge, la, mu, nu) {
     ## matrix to hold spp
@@ -69,13 +71,14 @@ Nu <- seq(0.5, 1.5, length.out = 3)
 pars <- as.matrix(expand.grid(la = La, mu = Mu, nu = Nu))
 
 islandDiv <- mclapply(1:nrow(pars), mc.cores = 6, FUN = function(i) {
-   Sout <- replicate(100, islandSim(ages, maxAge, pars[i, 1], pars[i, 2], pars[i, 3]))
-   
-   out <- t(apply(Sout, 1, function(x) c(m = mean(x), 
-                                         ci = quantile(x, c(0.025, 0.975), names = FALSE))))
-   out <- cbind(age = maxAge - ages, out)
-   
-   return(cbind(pars[rep(i, nrow(out)), ], out))
+    print(i)
+    Sout <- replicate(100, islandSim(ages, maxAge, pars[i, 1], pars[i, 2], pars[i, 3]))
+    
+    out <- t(apply(Sout, 1, function(x) c(m = mean(x), 
+                                          ci = quantile(x, c(0.025, 0.975), names = FALSE))))
+    out <- cbind(age = maxAge - ages, out)
+    
+    return(cbind(pars[rep(i, nrow(out)), ], out))
 })
 
 islandDiv <- do.call(rbind, islandDiv)
