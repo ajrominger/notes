@@ -1,30 +1,150 @@
 ---
 title: "Simulating birth-death-immigration"
 author: "A. J. Rominger"
-date: "1/23/2018"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+tags: equilibrium diversification evo-ecology
 output: html_document
+bibliography: notes.bib
 ---
 
 ```{r setup, include=FALSE}
+# output: 
+#   md_document:
+#     variant: markdown_github
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+This is a continuation of earlier work on the birth-death-immigration (BDI) process.  I'd like to be able to avoid simulating ever time step and instead use some well known behavior [@kendall1948] to efficiently sample a sequence of time events.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+The easy part is that a BDI process with $b$ birth rate, $d$ death rate and $m$ immigration rate, starting at $N(0) = 0$, and observed after $T$ time can be easily modeled as a negative binomial distribution:
+$$
+P(n) = \frac{\Gamma(n + k)}{\Gamma(k) n!} \left(\frac{k}{k + \mu}\right)^k \left(\frac{m}{k+\mu}\right)^n
+$$
+where $k = \frac{m}{b}$ and $\mu = \frac{m \left(e^{(b - d)T} - 1\right)}{b - d}$.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The harder part is what about $N(0) > 0$?  This is neccesary if we want to sample the process at a set of times $\{t_1, t_2, \ldots, t_s\}$.  The BDI process is hard to solve for conditions other than $N(0) = 0$, but the birth-death (BD) process can be more conveniently solved for $N(0) = 1$ and takes the form of a geometric distribution with modified probability at 0:
+$$
+P(n) = \left\{
+\begin{array}{rl}
+P_0 & \text{if } n = 0\\
+(1 - P_0) (1 - u) u^{n-1} & \text{if } x > 0
+\end{array} \right.
+$$
+where $P_0 = \frac{d(e^{(b - d)T} - 1)}{b e^{(b - d)T} - d}$ and $u = \frac{b(e^{(b - d)T} - 1)}{b e^{(b - d)T} - d}$.
 
-```{r cars}
-summary(cars)
+We can take advantage of the independence of lineages such that the process at time $t_s$ can be decomposed into $N_{BDI}(t_s - t_{s - 1}) + \sum_{i \in N(t_{s - 1})} N_{BD}(t_s - t_{s - 1}; N_{BD}(t_{s-1}) = 1)$. Specifically that means the sum of a BDI process after $t_s - t_{s - 1}$ time plus the sum over all $N(t_{s-1})$ independent BD processes initiated with one individual.
+
+I wanted to see if this would work out in simulations.
+
+First some setup:
+
+```{r}
+library(distr)
+library(socorro)
+library(MASS)
+
+# negative binomial solutions
+nbK <- function(m, b) {
+    m / b
+}
+
+nbMu <- function(m, b, d, t) {
+    m * (exp((b - d) * t) - 1) / (b - d)
+}
+
+# modified geometric for BD process with N(0) = 1 (Kendall 1948 eq 27)
+dmodgeo <- function(x, b, d, t) {
+    La <- exp((b - d) * t)
+    u <- b * (La - 1) / (b * La - d)
+    P0 <- d * (La - 1) / (b * La - d)
+    out <- numeric(length(x))
+    out[x == 0] <- P0
+    out[x > 0] <- (1 - P0) * (1 - u) * u^(x[x > 0] - 1)
+    
+    return(out)
+}
 ```
 
-## Including Plots
+Now we set up a simulation sampling every `tt <- seq(0, 10, length.out = 8)` time steps
+```{r}
+# simulation parameters
+b <- 1
+d <- 1.1
+m <- 0.8
+tt <- seq(0, 10, length.out = 8)
 
-You can also embed plots, for example:
+# time simulation
+nsim <- 10000
+x <- matrix(0, nrow = nsim, ncol = length(tt))
+x[, 2] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[2]))
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+for(i in 3:length(tt)) {
+    # immigration is always possible
+    x[, i] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[i] - tt[i - 1]))
+    
+    # for those realizations where individuals already exist, birth and 
+    # death adds to pop size
+    thisModGeo <- DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    fromBD <- thisModGeo@r(sum(x[, i - 1]))
+    grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
+    fromBDParsed <- sapply(split(fromBD, grps), sum)
+    x[x[, i - 1] > 0, i] <- x[x[, i - 1] > 0, i] + fromBDParsed
+}
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Now we can see if this works by plotting the eCDF of the simulated data against the predicted CDF of the properly parameterized negative binomial:
+
+```{r, fig.width=4, fig.height=4}
+plot(simpECDF(x[, ncol(x)]))
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), nbK(m, b), mu = nbMu(m, b, d, max(tt))), 
+      col = 'red')
+foo <- fitdistr(x[, ncol(x)], 'negative binomial')
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), foo$estimate[1], mu = foo$estimate[2]), 
+      col = 'blue', lty = 2)
+
+```
+
+The red line is what we expect from theory and the blue line is the best fit negative binomial.  So you can see the simulated results are negative binomial, but the theory fit doesn't look so hot.  I was curious if considering a longer timeframe changes that:
+
+```{r}
+# simulation parameters
+b <- 1
+d <- 1.1
+m <- 0.8
+tt <- seq(0, 1000, length.out = 8)
+```
+
+```{r, fig.width=4, fig.height=4, echo=FALSE}
+# time simulation
+nsim <- 10000
+x <- matrix(0, nrow = nsim, ncol = length(tt))
+x[, 2] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[2]))
+
+for(i in 3:length(tt)) {
+    # immigration is always possible
+    x[, i] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[i] - tt[i - 1]))
+    
+    # for those realizations where individuals already exist, birth and 
+    # death adds to pop size
+    thisModGeo <- DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    fromBD <- thisModGeo@r(sum(x[, i - 1]))
+    grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
+    fromBDParsed <- sapply(split(fromBD, grps), sum)
+    x[x[, i - 1] > 0, i] <- x[x[, i - 1] > 0, i] + fromBDParsed
+}
+
+plot(simpECDF(x[, ncol(x)]))
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), nbK(m, b), mu = nbMu(m, b, d, max(tt))), 
+      col = 'red')
+foo <- fitdistr(x[, ncol(x)], 'negative binomial')
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), foo$estimate[1], mu = foo$estimate[2]), 
+      col = 'blue', lty = 2)
+```
+
+It does, so why does it.  It could be that over such a time period all the lineages that result from BD go extinct leaving just the stationary BDI distribution.  More investigation is needed.
+
+## References
