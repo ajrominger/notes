@@ -12,6 +12,7 @@ bibliography: notes.bib
 #   md_document:
 #     variant: markdown_github
 knitr::opts_chunk$set(echo = TRUE)
+options(warn = -1)
 ```
 
 This is a continuation of earlier work on the birth-death-immigration (BDI) process.  I'd like to be able to avoid simulating ever time step and instead use some well known behavior [@kendall1948] to efficiently sample a sequence of time events.
@@ -38,8 +39,7 @@ I wanted to see if this would work out in simulations.
 
 First some setup:
 
-```{r}
-library(distr)
+```{r, results='hide'}
 library(socorro)
 library(MASS)
 
@@ -84,7 +84,7 @@ for(i in 3:length(tt)) {
     
     # for those realizations where individuals already exist, birth and 
     # death adds to pop size
-    thisModGeo <- DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    thisModGeo <- distr::DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
     fromBD <- thisModGeo@r(sum(x[, i - 1]))
     grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
     fromBDParsed <- sapply(split(fromBD, grps), sum)
@@ -103,7 +103,6 @@ foo <- fitdistr(x[, ncol(x)], 'negative binomial')
 lines(0:max(x[, ncol(x)]), 
       pnbinom(0:max(x[, ncol(x)]), foo$estimate[1], mu = foo$estimate[2]), 
       col = 'blue', lty = 2)
-
 ```
 
 The red line is what we expect from theory and the blue line is the best fit negative binomial.  So you can see the simulated results are negative binomial, but the theory fit doesn't look so hot.  I was curious if considering a longer timeframe changes that:
@@ -128,7 +127,7 @@ for(i in 3:length(tt)) {
     
     # for those realizations where individuals already exist, birth and 
     # death adds to pop size
-    thisModGeo <- DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    thisModGeo <- distr::DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
     fromBD <- thisModGeo@r(sum(x[, i - 1]))
     grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
     fromBDParsed <- sapply(split(fromBD, grps), sum)
@@ -146,5 +145,81 @@ lines(0:max(x[, ncol(x)]),
 ```
 
 It does, so why does it.  It could be that over such a time period all the lineages that result from BD go extinct leaving just the stationary BDI distribution.  More investigation is needed.
+
+For short timescales there's also a marked effect of changing the number of samples between $t = 0$ and $t = T_{max}$ and the fit between simulated data and Kendall's prediction is worst for more dense sampling:
+
+```{r}
+# simulation parameters
+b <- 1
+d <- 1.1
+m <- 0.8
+tt <- seq(0, 10, length.out = 4)
+```
+
+```{r, fig.width=4, fig.height=4, echo=FALSE}
+# time simulation
+nsim <- 10000
+x <- matrix(0, nrow = nsim, ncol = length(tt))
+x[, 2] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[2]))
+
+for(i in 3:length(tt)) {
+    # immigration is always possible
+    x[, i] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[i] - tt[i - 1]))
+    
+    # for those realizations where individuals already exist, birth and 
+    # death adds to pop size
+    thisModGeo <- distr::DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    fromBD <- thisModGeo@r(sum(x[, i - 1]))
+    grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
+    fromBDParsed <- sapply(split(fromBD, grps), sum)
+    x[x[, i - 1] > 0, i] <- x[x[, i - 1] > 0, i] + fromBDParsed
+}
+
+plot(simpECDF(x[, ncol(x)]))
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), nbK(m, b), mu = nbMu(m, b, d, max(tt))), 
+      col = 'red')
+foo <- fitdistr(x[, ncol(x)], 'negative binomial')
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), foo$estimate[1], mu = foo$estimate[2]), 
+      col = 'blue', lty = 2)
+```
+
+```{r}
+# simulation parameters
+b <- 1
+d <- 1.1
+m <- 0.8
+tt <- seq(0, 10, length.out = 40)
+```
+
+```{r, fig.width=4, fig.height=4, echo=FALSE}
+# time simulation
+nsim <- 10000
+x <- matrix(0, nrow = nsim, ncol = length(tt))
+x[, 2] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[2]))
+
+for(i in 3:length(tt)) {
+    # immigration is always possible
+    x[, i] <- rnbinom(nsim, nbK(m, b), mu = nbMu(m, b, d, tt[i] - tt[i - 1]))
+    
+    # for those realizations where individuals already exist, birth and 
+    # death adds to pop size
+    thisModGeo <- distr::DiscreteDistribution(0:10^5, dmodgeo(0:10^5, b, d, tt[i]))
+    fromBD <- thisModGeo@r(sum(x[, i - 1]))
+    grps <- rep(1:sum(x[, i - 1] > 0), x[x[, i - 1] > 0, i - 1])
+    fromBDParsed <- sapply(split(fromBD, grps), sum)
+    x[x[, i - 1] > 0, i] <- x[x[, i - 1] > 0, i] + fromBDParsed
+}
+
+plot(simpECDF(x[, ncol(x)]))
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), nbK(m, b), mu = nbMu(m, b, d, max(tt))), 
+      col = 'red')
+foo <- fitdistr(x[, ncol(x)], 'negative binomial')
+lines(0:max(x[, ncol(x)]), 
+      pnbinom(0:max(x[, ncol(x)]), foo$estimate[1], mu = foo$estimate[2]), 
+      col = 'blue', lty = 2)
+```
 
 ## References
