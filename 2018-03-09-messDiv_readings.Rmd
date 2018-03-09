@@ -1,0 +1,108 @@
+---
+title: Selected readings
+description: Readings about models to be used and key systems
+header: Selected readings
+# output: 
+#   md_document:
+#     variant: markdown_github
+output: html_document
+bibliography: ../continuousity/messDiv.github.io/messDiv.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Below we summarize and categorize some key papers relevant to our working group.
+
+# Theories of assembly and diversification
+
+## Core ecological neutrality
+
+**@hubbell2001:**
+The book on the matter.
+
+**@etienne2005:**
+A backward in time ("ancestry assignment") algorithm for the simple neutral theory.  But inherently it produces phylogenies, and possibly geneologies on which mutations could be introduced.
+
+## **@alonso2004:**
+A forward time sampling theory for Hubbell's model.
+
+##**@etienne2007zeroSum:**
+
+**@rosindell2012TREE:**
+After $10+$ years of study on Hubbell's model, this lays at the case in favor of what that model offers
+
+
+## Statistical mechanical theories/models of assembly
+
+\cite{Bowler2012-tn}
+
+\cite{Banavar2010-bt}
+
+\cite{Pueyo2006-id}
+
+## Spatially explicit neutral ecology
+
+**@rosindell2008ecoInfo:**
+An algorithm is presented to simulate spatially-explicity neutral communities in a study plot embedded within an infinite landscape.  The algorithm is backward in time (i.e. coalescent) providing computational efficiences, further added by clever indexing.  It should be noted that the coalescent algorithm they present can only provide simulated communities in equilibrium because the coalesences in allowed to occur over potentially infinite time.  This algorithm is used in @rosindell2007 to study the SAR.
+
+**@odwyer2017:**
+Spatially explicit backward time model with analytical results.  Effectively @rosindell2008ecoInfo but with an approximate analytical solution. 
+
+**@etienne2011:**
+Uses @rosindell2008ecoInfo to simulate spatially explicit lanscapes, but then fits classic spatially implicity neutral theory to those.  Shows that the results are not consistent, and that spatially implicit theory does a better job matching real data.  Suggests that perhaps field theory models (e.g spatailly implicit neutral theory) do better because they average over many details that explicit models must get exactly right
+
+**@rosindell2013sadScaling:**
+Again uses @rosindell2008ecoInfo to show that Fisher log-series shows up at small and largest scales.  This brings spatially explicit neutral SAD back in better agreement with data, also provides oppurtunities to more rigorously test neutral theory.
+
+**@odwyer2010:**
+Cool paper, but the field-theoretic approach is not correct, as shown by our own @grilli2012.
+
+
+## Island neutral ecology models
+
+**@etienne2007:**
+Provides an analytical solution to sampling formula for multiple samples from the same metacommunity.  Also provides an algorithm (seemingly backword in time) for generating such samples.  This algorithm could be a very good jumping off point for simulating multiple islands.  Immigration between islands would need to be added.  The algorithm seems to be vectorizable too.
+
+**@rosindell2013island:**
+The model for neutral island community evolution.  Options for different speciation mechanisms including protracted.
+
+
+## More thoughts on speciation and phylogenies in neutral ecology models
+
+**@rosindell2010:**
+The protracted speciation model.  Backward in time simulation.  The model retains much of the positive traits of classic neutral theory (e.g. Fisher log series) but has more realistic dynamics.
+
+**@rosindell2011:**
+Extension of the protracted speciation model to include anagenesis/cladogenesis, and immigration rate proportional to island size.
+
+**@etienne2011fission:**
+A different model for more realistic speciation in which species randomly split into new species.  Does a worse job (but not by much) of fitting the SAD, and the metacommunity SAD becomes broken stick instead of Fisher---could be a good thing or a bad thing.  But the deep time dynamics (i.e. speciation events) are more realistic.  No backward time simulation is possible because random fission is not a reversible process.
+
+**@jabot2009:**
+Uses @etienne2005 simulation method to do ABC on phylogenies and abundance data.  Shows that phylogenetic balance helps parameter identifiability.
+
+
+## Non-neutral ecology models
+
+**@rosindell2015:**
+Basically the same model as @kessler2014 but assuming brownian motion of fitness instead of fitness evolving on a quadratic fitness landscape.  Forward time simulation implemented.
+
+**@kessler2014:**
+Provides several models, but most usefully a forward time simulation of all the dynamics of neutral theory plus heiritable differences in fitness.  Could be useful for thinking about environmentally explicit models.  No code or pseudo code provided.
+
+**@carmel2017:**
+
+Re-dirivation of the fitness difference vs. niche difference framework, but with rigorous mathematics.  Could be a useful model for simulating species interactions but the paper itself dosen't present a simulation, only analytical results.
+
+## **haegeman2017:**
+
+## Model fitting and inference
+
+## Key systems
+
+## Coalescent models
+
+
+## References
