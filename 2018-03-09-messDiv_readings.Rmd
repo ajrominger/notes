@@ -25,22 +25,44 @@ The book on the matter.
 **@etienne2005:**
 A backward in time ("ancestry assignment") algorithm for the simple neutral theory.  But inherently it produces phylogenies, and possibly geneologies on which mutations could be introduced.
 
-## **@alonso2004:**
+**@alonso2004:**
 A forward time sampling theory for Hubbell's model.
 
-##**@etienne2007zeroSum:**
+**@etienne2007zeroSum:**
+Explores whether the zero-sum assumption of Hubbell's original model is neccesary and concludes that it's not.
 
 **@rosindell2012TREE:**
 After $10+$ years of study on Hubbell's model, this lays at the case in favor of what that model offers
 
 
-## Statistical mechanical theories/models of assembly
+## Core sampling formulae
 
-\cite{Bowler2012-tn}
+These approaches use master equations (or a related approach) of the assembly dynamics to derive equations for the population sizes of species. Not all approaches are inherently neutral
 
-\cite{Banavar2010-bt}
+**@kendall1948fisher:**
+Derives the sampling distribution for a birth-death-immigration process---which is precisely the process we care about when considering the assembly of a local community.
 
-\cite{Pueyo2006-id}
+**@haegeman2017:**
+A fantastic paper about sampling distributions under a variety of scenarios. Inspired by much of the work discussed below on sampling the neutral theory of biodiversity.
+
+
+## Core statistical mechanical theories/models of assembly
+
+**@pueyo2006:**
+Overview of the philosophy and potential for the principle of maximum information entropy applied to ecology
+
+**@banavar2010:**
+A nice review of MaxEnt, with many examples from ecology
+
+**@harte2008:**
+Lays the foundation for John's MaxEnt theory of abundances, metabolic rates, and spatial distributions
+
+**@harte2009:**
+Extends @harte2008 to look explicitly at spatial scaling.
+
+**@bowler2012:**
+A nice application of MaxEnt to derive (using a very different approach from John) the Fisher log-series.
+
 
 ## Spatially explicit neutral ecology
 
@@ -65,8 +87,11 @@ Cool paper, but the field-theoretic approach is not correct, as shown by our own
 **@etienne2007:**
 Provides an analytical solution to sampling formula for multiple samples from the same metacommunity.  Also provides an algorithm (seemingly backword in time) for generating such samples.  This algorithm could be a very good jumping off point for simulating multiple islands.  Immigration between islands would need to be added.  The algorithm seems to be vectorizable too.
 
-**@rosindell2013island:**
+**@rosindell2011:**
 The model for neutral island community evolution.  Options for different speciation mechanisms including protracted.
+
+**@rosindell2013island:**
+Model of community assembly on islands with immigration only
 
 
 ## More thoughts on speciation and phylogenies in neutral ecology models
@@ -96,13 +121,14 @@ Provides several models, but most usefully a forward time simulation of all the 
 
 Re-dirivation of the fitness difference vs. niche difference framework, but with rigorous mathematics.  Could be a useful model for simulating species interactions but the paper itself dosen't present a simulation, only analytical results.
 
-## **haegeman2017:**
+# Model fitting and inference
 
-## Model fitting and inference
+**@mcgill2003**
+**@mcgill2007**
 
-## Key systems
+# Key systems
 
-## Coalescent models
+# Coalescent models
 
 
 ## References
