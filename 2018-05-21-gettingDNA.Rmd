@@ -1,6 +1,10 @@
 ---
 title: "Getting sequence data with R"
-output: html_document
+author: "A. J. Rominger"
+date: "21 May 2018"
+output: 
+  md_document:
+    variant: markdown_github
 bibliography: notes.bib
 ---
 
@@ -8,7 +12,7 @@ bibliography: notes.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-I've always been ennamored with the genus *Castilleja*. I thought it would be fun to see how much sequence data there is for the group in the hopes of one day doing a cool phylogenetic/biogeographic study.
+I've always been enamored with the genus *Castilleja*. I thought it would be fun to see how much sequence data there is for the group in the hopes of one day doing a cool phylogenetic/biogeographic study.
 
 The folks at [rOpenSci](https://ropensci.org/) have given us a lot of help with the package *rentrez*. Below I work through getting actual sequence data for all *Castilleja* in GenBank.
 
@@ -31,9 +35,9 @@ x <- xmlToList(x)
 
 ## Figuring out the XML
 
-With that one sequence in hand we need to figure out what from the unruley XML we want. I'd like information about the sequence ID, taxon sequenced, what was sequenced (locus or primers), where the specimen comes from, museum curation information, publication information, and of course the sequence itself.
+With that one sequence in hand we need to figure out what from the unruly XML we want. I'd like information about the sequence ID, taxon sequenced, what was sequenced (locus or primers), where the specimen comes from, museum curation information, publication information, and of course the sequence itself.
 
-Getting those things is just a matter of figuring out where they live, which I have no better solution for other than poking around in the XML.  Which is how I got the following. First note there are redundancies in the XML nodes, so if we convert the list `x` into a vector, each entry will have a unique name because all the nodes are concatonated.
+Getting those things is just a matter of figuring out where they live, which I have no better solution for other than poking around in the XML.  Which is how I got the following. First note there are redundancies in the XML nodes, so if we convert the list `x` into a vector, each entry will have a unique name because all the nodes are concatenated.
 
 ```{r}
 # turn list into vector
@@ -249,7 +253,7 @@ asn1 == fasta
 
 Let's make a function that can take a vector of NCBI IDs and return a list with sequence data, and metadata about the sequence. To start the sequence data could just be a vector of class `character` and for each entry in that sequence vector, we could have a row in an accompanying `data.frame` with the metadata for that sequence.
 
-First note, when we call `rentrez::entrez_fetch` for multiple IDs, and turn the output into a list, we get a list whoes first element contains an entry for each record:
+First note, when we call `rentrez::entrez_fetch` for multiple IDs, and turn the output into a list, we get a list whose first element contains an entry for each record:
 
 ```{r}
 # get multiple sequences
