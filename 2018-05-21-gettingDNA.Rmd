@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 I've always been ennamored with the genus *Castilleja*. I thought it would be fun to see how much sequence data there is for the group in the hopes of one day doing a cool phylogenetic/biogeographic study.
 
-The folks at rOpenSci have given us a lot of help with the package *rentrez*. Below I work through getting actual sequence data for all *Castilleja* in GenBank.
+The folks at [rOpenSci](https://ropensci.org/) have given us a lot of help with the package *rentrez*. Below I work through getting actual sequence data for all *Castilleja* in GenBank.
 
 ```{r}
 library(XML)
@@ -29,6 +29,8 @@ x <- entrez_fetch(db = 'nuccore', id = castilleja$ids[1],
 x <- xmlToList(x)
 ```
 
+## Figuring out the XML
+
 With that one sequence in hand we need to figure out what from the unruley XML we want. I'd like information about the sequence ID, taxon sequenced, what was sequenced (locus or primers), where the specimen comes from, museum curation information, publication information, and of course the sequence itself.
 
 Getting those things is just a matter of figuring out where they live, which I have no better solution for other than poking around in the XML.  Which is how I got the following. First note there are redundancies in the XML nodes, so if we convert the list `x` into a vector, each entry will have a unique name because all the nodes are concatonated.
@@ -43,7 +45,7 @@ basePath <- 'Bioseq-set_seq-set.Seq-entry.Seq-entry_seq.Bioseq'
 
 ### Sequence ID
 
-Genbank:
+GenBank:
 ```{r}
 x[paste(basePath, 
         'Bioseq_id', 'Seq-id', 'Seq-id_genbank', 'Textseq-id', 'Textseq-id_accession', 
@@ -55,7 +57,6 @@ Broader NCBI:
 x[paste(basePath, 
         'Bioseq_id', 'Seq-id', 'Seq-id_gi',
         sep = '.')]
-
 ```
 
 
@@ -63,7 +64,8 @@ x[paste(basePath,
 ```{r}
 x[paste(basePath,
         'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 'BioSource',
-        'BioSource_org', 'Org-ref', 'Org-ref_taxname', sep = '.')]
+        'BioSource_org', 'Org-ref', 'Org-ref_taxname', 
+        sep = '.')]
 ```
 
 ### Locus information
@@ -134,24 +136,70 @@ Country and other geography from the specimen label
 x[grep('country', x) + 1]
 ```
 
+Collection date info
+```{r}
+x[grep('collection-date', x) + 1]
+```
 
 
 ### Museum/curration information
 
+Unique ID
 ```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 
+        'BioSource', 'BioSource_org', 'Org-ref', 'Org-ref_orgname', 
+        'OrgName', 'OrgName_mod', 'OrgMod', 'OrgMod_subname', 
+        sep = '.')]
 ```
 
-Collection date info
+Other database (e.g. BOLD)
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 
+        'BioSource', 'BioSource_org', 'Org-ref', 'Org-ref_db', 
+        'Dbtag', 'Dbtag_db', 
+        sep = '.')]
+
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 
+        'BioSource', 'BioSource_org', 'Org-ref', 'Org-ref_db', 
+        'Dbtag', 'Dbtag_tag', 'Object-id', 'Object-id_str', 
+        sep = '.')]
+```
+
 
 
 ### Publication
+
+PubMed
 ```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_pub', 
+        'Pubdesc', 'Pubdesc_pub', 'Pub-equiv', 'Pub', 'Pub_article', 
+        'Cit-art', 'Cit-art_ids', 'ArticleIdSet', 'ArticleId', 
+        'ArticleId_pubmed', 'PubMedId', 
+        sep = '.')]
 ```
+
+DOI
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_pub', 
+        'Pubdesc', 'Pubdesc_pub', 'Pub-equiv', 'Pub', 'Pub_article', 
+        'Cit-art', 'Cit-art_ids', 'ArticleIdSet', 'ArticleId', 
+        'ArticleId_doi', 'DOI', 
+        sep = '.')]
+```
+
 
 ### Sequence itself
 ```{r}
+x[paste(basePath,
+        'Bioseq_inst', 'Seq-inst', 'Seq-inst_seq-data', 'Seq-data', 
+        'Seq-data_ncbi2na', 'NCBI2na', 
+        sep = '.')]
 ```
-
 
 The DNA sequence is stored in `ncbi2na` format, which is `ASN.1` encoded binary. Borrowing from @kinser2010 we can decode this as follows:
 
@@ -183,9 +231,10 @@ dnaFromASN1 <- function(x) {
 And test it:
 ```{r}
 # get ASN.1 formatted sequence
-asn1 <- dnaFromASN1(x$`Bioseq-set_seq-set`$`Seq-entry`$`Seq-entry_seq`$
-                        Bioseq$Bioseq_inst$`Seq-inst`$`Seq-inst_seq-data`$
-                        `Seq-data`$`Seq-data_ncbi2na`$NCBI2na)
+asn1 <- dnaFromASN1(x[paste(basePath,
+                            'Bioseq_inst', 'Seq-inst', 'Seq-inst_seq-data', 
+                            'Seq-data', 'Seq-data_ncbi2na', 'NCBI2na', 
+                            sep = '.')])
 
 # get FASTA sequence
 fasta <- entrez_fetch(db = 'nuccore', id = castilleja$ids[1], rettype = 'fasta')
@@ -194,5 +243,163 @@ fasta <- paste(strsplit(fasta, '\n')[[1]][-1], collapse = '')
 # compare the two
 asn1 == fasta
 ```
+
+
+## Putting it all together
+
+Let's make a function that can take a vector of NCBI IDs and return a list with sequence data, and metadata about the sequence. To start the sequence data could just be a vector of class `character` and for each entry in that sequence vector, we could have a row in an accompanying `data.frame` with the metadata for that sequence.
+
+First note, when we call `rentrez::entrez_fetch` for multiple IDs, and turn the output into a list, we get a list whoes first element contains an entry for each record:
+
+```{r}
+# get multiple sequences
+x <- entrez_fetch(db = 'nuccore', id = castilleja$ids[1:3], 
+                  rettype = 'native', retmode = 'xml', 
+                  parsed = TRUE)
+x <- xmlToList(x)
+length(x[[1]])
+```
+
+Each record starts with
+```{r}
+names(x[[1]])
+```
+
+
+So our function to get all records should first use `rentrez::entrez_fetch` on all the IDs, then loop over each `Seq-entry` and extract the relevant information. We can first write the function to get the relevant information. Let's assume that each `Seq-entry` element has been turned into a vector as before
+
+```{r}
+cleanEntrez <- function(x) {
+    # starting after `Seq-entry` we now need a shorter base path
+    basePath <- 'Seq-entry_seq.Bioseq'
+    
+    # return everything we want
+    c(
+        genbank = as.character(x[paste(basePath, 
+                                       'Bioseq_id', 'Seq-id', 'Seq-id_genbank', 
+                                       'Textseq-id', 'Textseq-id_accession', 
+                                       sep = '.')]),
+        ncbi = as.character(x[paste(basePath, 
+                                    'Bioseq_id', 'Seq-id', 'Seq-id_gi',
+                                    sep = '.')]),
+        taxon = as.character(x[paste(basePath,
+                                     'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                     'Seqdesc_source', 'BioSource', 'BioSource_org', 
+                                     'Org-ref', 'Org-ref_taxname', 
+                                     sep = '.')]),
+        seqdesc_title = as.character(x[paste(basePath,
+                                             'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                             'Seqdesc_title', 
+                                             sep = '.')]),
+        biomol = as.character(x[paste(basePath,
+                                      'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                      'Seqdesc_molinfo', 'MolInfo', 'MolInfo_biomol', '', 
+                                      'attrs.value', 
+                                      sep = '.')]),
+        seqfeat_comment = as.character(x[paste(basePath,
+                                               'Bioseq_annot', 'Seq-annot', 
+                                               'Seq-annot_data', 'Seq-annot_data_ftable', 
+                                               'Seq-feat', 'Seq-feat_comment', 
+                                               sep = '.')]),
+        seq_length = as.integer(x[paste(basePath,
+                                        'Bioseq_annot', 'Seq-annot', 'Seq-annot_data', 
+                                        'Seq-annot_data_ftable', 'Seq-feat', 
+                                        'Seq-feat_location', 'Seq-loc', 'Seq-loc_int', 
+                                        'Seq-interval', 'Seq-interval_to', 
+                                        sep = '.')]) -
+            as.integer(x[paste(basePath,
+                               'Bioseq_annot', 'Seq-annot', 'Seq-annot_data', 
+                               'Seq-annot_data_ftable', 'Seq-feat', 
+                               'Seq-feat_location', 'Seq-loc', 'Seq-loc_int', 
+                               'Seq-interval', 'Seq-interval_from', 
+                               sep = '.')]),
+        primer_forward = as.character(x[paste(basePath,
+                                              'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                              'Seqdesc_source', 'BioSource', 
+                                              'BioSource_pcr-primers', 'PCRReactionSet', 
+                                              'PCRReaction', 'PCRReaction_forward', 
+                                              'PCRPrimerSet', 'PCRPrimer', 'PCRPrimer_seq', 
+                                              'PCRPrimerSeq', 
+                                              sep = '.')]),
+        primer_reverse = as.character(x[paste(basePath,
+                                              'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                              'Seqdesc_source', 'BioSource', 
+                                              'BioSource_pcr-primers', 'PCRReactionSet', 
+                                              'PCRReaction', 'PCRReaction_reverse', 
+                                              'PCRPrimerSet', 'PCRPrimer', 'PCRPrimer_seq', 
+                                              'PCRPrimerSeq', 
+                                              sep = '.')]),
+        lat_lon = as.character(x[grep('lat-lon', x) + 1]),
+        geo_description = as.character(x[grep('country', x) + 1]),
+        coll_date = as.character(x[grep('collection-date', x) + 1]),
+        museum_UID = as.character(x[paste(basePath,
+                                          'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                          'Seqdesc_source', 'BioSource', 'BioSource_org', 
+                                          'Org-ref', 'Org-ref_orgname', 'OrgName', 
+                                          'OrgName_mod', 'OrgMod', 'OrgMod_subname', 
+                                          sep = '.')]),
+        other_db = as.character(x[paste(basePath,
+                                        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                        'Seqdesc_source', 'BioSource', 'BioSource_org', 
+                                        'Org-ref', 'Org-ref_db', 'Dbtag', 'Dbtag_db', 
+                                        sep = '.')]),
+        other_db_id = as.character(x[paste(basePath,
+                                           'Bioseq_descr', 'Seq-descr', 'Seqdesc', 
+                                           'Seqdesc_source', 'BioSource', 'BioSource_org', 
+                                           'Org-ref', 'Org-ref_db', 'Dbtag', 'Dbtag_tag', 
+                                           'Object-id', 'Object-id_str', 
+                                           sep = '.')]),
+        pubmed = as.character(x[paste(basePath,
+                                      'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_pub', 
+                                      'Pubdesc', 'Pubdesc_pub', 'Pub-equiv', 'Pub', 
+                                      'Pub_article', 'Cit-art', 'Cit-art_ids', 
+                                      'ArticleIdSet', 'ArticleId', 'ArticleId_pubmed', 
+                                      'PubMedId', 
+                                      sep = '.')]),
+        doi = as.character(x[paste(basePath,
+                                   'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_pub', 
+                                   'Pubdesc', 'Pubdesc_pub', 'Pub-equiv', 'Pub', 
+                                   'Pub_article', 'Cit-art', 'Cit-art_ids', 'ArticleIdSet', 
+                                   'ArticleId', 'ArticleId_doi', 'DOI', 
+                                   sep = '.')]),
+        sequence = dnaFromASN1(x[paste(basePath,
+                                       'Bioseq_inst', 'Seq-inst', 'Seq-inst_seq-data', 
+                                       'Seq-data', 'Seq-data_ncbi2na', 'NCBI2na', 
+                                       sep = '.')])
+    )
+}
+
+# test it
+cleanEntrez(unlist(x[[1]][[1]]))
+```
+
+
+Now we can bundle this into a function to extract data for multiple records
+
+```{r}
+# function to loop over records, extracting data from each
+getGenBankSeq <- function(ids) {
+    allRec <- entrez_fetch(db = 'nuccore', id = ids, 
+                           rettype = 'native', retmode = 'xml', 
+                           parsed = TRUE)
+    allRec <- xmlToList(allRec)[[1]]
+    
+    o <- lapply(allRec, function(x) {
+        cleanEntrez(unlist(x))
+    })
+    
+    temp <- array(unlist(o), dim = c(length(o[[1]]), length(ids)))
+    seqVec <- temp[nrow(temp), ]
+    seqDF <- as.data.frame(t(temp[-nrow(temp), ]))
+    names(seqDF) <- names(o[[1]])[-nrow(temp)]
+    
+    return(list(seq = seqVec, data = seqDF))
+}
+
+
+# test it
+getGenBankSeq(castilleja$ids[1:3])
+```
+
 
 ## References
