@@ -1,0 +1,198 @@
+---
+title: "Getting sequence data with R"
+output: html_document
+bibliography: notes.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I've always been ennamored with the genus *Castilleja*. I thought it would be fun to see how much sequence data there is for the group in the hopes of one day doing a cool phylogenetic/biogeographic study.
+
+The folks at rOpenSci have given us a lot of help with the package *rentrez*. Below I work through getting actual sequence data for all *Castilleja* in GenBank.
+
+```{r}
+library(XML)
+library(rentrez)
+
+# retrieve Castilleja sequence IDs
+castilleja <- entrez_search(db = 'nuccore', term = 'Castilleja[ORGN]', 
+                            retmax = 1000)
+
+# get one sequence
+x <- entrez_fetch(db = 'nuccore', id = castilleja$ids[1], 
+                  rettype = 'native', retmode = 'xml', 
+                  parsed = TRUE)
+
+# parse XML to list
+x <- xmlToList(x)
+```
+
+With that one sequence in hand we need to figure out what from the unruley XML we want. I'd like information about the sequence ID, taxon sequenced, what was sequenced (locus or primers), where the specimen comes from, museum curation information, publication information, and of course the sequence itself.
+
+Getting those things is just a matter of figuring out where they live, which I have no better solution for other than poking around in the XML.  Which is how I got the following. First note there are redundancies in the XML nodes, so if we convert the list `x` into a vector, each entry will have a unique name because all the nodes are concatonated.
+
+```{r}
+# turn list into vector
+x <- unlist(x)
+
+# all nodes share this in common:
+basePath <- 'Bioseq-set_seq-set.Seq-entry.Seq-entry_seq.Bioseq'
+```
+
+### Sequence ID
+
+Genbank:
+```{r}
+x[paste(basePath, 
+        'Bioseq_id', 'Seq-id', 'Seq-id_genbank', 'Textseq-id', 'Textseq-id_accession', 
+        sep = '.')]
+```
+
+Broader NCBI:
+```{r}
+x[paste(basePath, 
+        'Bioseq_id', 'Seq-id', 'Seq-id_gi',
+        sep = '.')]
+
+```
+
+
+### Taxon
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 'BioSource',
+        'BioSource_org', 'Org-ref', 'Org-ref_taxname', sep = '.')]
+```
+
+### Locus information
+
+This can be tricky, some is in the description
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_title', 
+        sep = '.')]
+```
+
+More can be found in other attributes
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_molinfo', 
+        'MolInfo', 'MolInfo_biomol', '', 'attrs.value', 
+        sep = '.')]
+
+x[paste(basePath,
+        'Bioseq_annot', 'Seq-annot', 'Seq-annot_data', 'Seq-annot_data_ftable', 
+        'Seq-feat', 'Seq-feat_comment', 
+        sep = '.')]
+```
+
+We can get the length of the sequence
+```{r}
+as.integer(x[paste(basePath,
+                   'Bioseq_annot', 'Seq-annot', 'Seq-annot_data', 
+                   'Seq-annot_data_ftable', 'Seq-feat', 
+                   'Seq-feat_location', 'Seq-loc', 'Seq-loc_int', 
+                   'Seq-interval', 'Seq-interval_to', 
+        sep = '.')]) -
+    as.integer(x[paste(basePath,
+                       'Bioseq_annot', 'Seq-annot', 'Seq-annot_data', 
+                       'Seq-annot_data_ftable', 'Seq-feat', 
+                       'Seq-feat_location', 'Seq-loc', 'Seq-loc_int', 
+                       'Seq-interval', 'Seq-interval_from', 
+                       sep = '.')])
+
+```
+
+Perhaps most definitive we can get the primers
+```{r}
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 
+        'BioSource', 'BioSource_pcr-primers', 'PCRReactionSet', 
+        'PCRReaction', 'PCRReaction_forward', 'PCRPrimerSet', 'PCRPrimer', 
+        'PCRPrimer_seq', 'PCRPrimerSeq', 
+        sep = '.')]
+
+x[paste(basePath,
+        'Bioseq_descr', 'Seq-descr', 'Seqdesc', 'Seqdesc_source', 
+        'BioSource', 'BioSource_pcr-primers', 'PCRReactionSet', 
+        'PCRReaction', 'PCRReaction_reverse', 'PCRPrimerSet', 'PCRPrimer', 
+        'PCRPrimer_seq', 'PCRPrimerSeq', 
+        sep = '.')]
+```
+
+### Specimen location
+
+Latitude and longitude if provided
+```{r}
+x[grep('lat-lon', x) + 1]
+```
+
+Country and other geography from the specimen label
+```{r}
+x[grep('country', x) + 1]
+```
+
+
+
+### Museum/curration information
+
+```{r}
+```
+
+Collection date info
+
+
+### Publication
+```{r}
+```
+
+### Sequence itself
+```{r}
+```
+
+
+The DNA sequence is stored in `ncbi2na` format, which is `ASN.1` encoded binary. Borrowing from @kinser2010 we can decode this as follows:
+
+```{r}
+# function to parse dna from ASN.1
+dnaFromASN1 <- function(x) {
+    x <- strsplit(x, '')[[1]]
+    x[x == '0'] <- 'AA'
+    x[x == '1'] <- 'AC'
+    x[x == '2'] <- 'AG'
+    x[x == '3'] <- 'AT'
+    x[x == '4'] <- 'CA'
+    x[x == '5'] <- 'CC'
+    x[x == '6'] <- 'CG'
+    x[x == '7'] <- 'CT'
+    x[x == '8'] <- 'GA'
+    x[x == '9'] <- 'GC'
+    x[x == 'A'] <- 'GG'
+    x[x == 'B'] <- 'GT'
+    x[x == 'C'] <- 'TA'
+    x[x == 'D'] <- 'TC'
+    x[x == 'E'] <- 'TG'
+    x[x == 'F'] <- 'TT'
+    
+    return(paste(x, collapse = ''))
+}
+```
+
+And test it:
+```{r}
+# get ASN.1 formatted sequence
+asn1 <- dnaFromASN1(x$`Bioseq-set_seq-set`$`Seq-entry`$`Seq-entry_seq`$
+                        Bioseq$Bioseq_inst$`Seq-inst`$`Seq-inst_seq-data`$
+                        `Seq-data`$`Seq-data_ncbi2na`$NCBI2na)
+
+# get FASTA sequence
+fasta <- entrez_fetch(db = 'nuccore', id = castilleja$ids[1], rettype = 'fasta')
+fasta <- paste(strsplit(fasta, '\n')[[1]][-1], collapse = '')
+
+# compare the two
+asn1 == fasta
+```
+
+## References
