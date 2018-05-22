@@ -1,0 +1,34 @@
+---
+title: "Spatially correlated Poisson lognormals look like negative binomials"
+author: "A. J. Rominger"
+date: "2/16/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, fig.width=4, fig.height=4}
+library(socorro)
+library(mvtnorm)
+library(MASS)
+library(viridis)
+
+nug <- 0.1
+xy <- expand.grid(1:20, 1:20)
+s <- nug * exp(-as.matrix(dist(xy)))
+diag(s) <- nug
+la <- rmvnorm(1, rep(1, nrow(s)), s, method = 'chol')
+
+par(mfrow = c(1, 2), mar = rep(0.5, 4))
+plot(xy, col = quantCol(exp(la), viridis(10)), pch = 16)
+
+n <- rpois(length(la), exp(la))
+
+fitn <- fitdistr(n, 'negative binomial')
+
+par(mar = c(4, 4, 1, 1))
+plot(simpECDF(n))
+lines(0:max(n), pnbinom(0:max(n), fitn$estimate[1], mu = fitn$estimate[2]), col = 'red')
+```

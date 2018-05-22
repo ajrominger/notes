@@ -2,10 +2,9 @@
 title: Selected readings
 description: Readings about models to be used and key systems
 header: Selected readings
-# output: 
-#   md_document:
-#     variant: markdown_github
-output: html_document
+output:
+  md_document:
+    variant: markdown_github
 bibliography: ../continuousity/messDiv.github.io/messDiv.bib
 ---
 
@@ -118,7 +117,6 @@ Basically the same model as @kessler2014 but assuming brownian motion of fitness
 Provides several models, but most usefully a forward time simulation of all the dynamics of neutral theory plus heiritable differences in fitness.  Could be useful for thinking about environmentally explicit models.  No code or pseudo code provided.
 
 **@carmel2017:**
-
 Re-dirivation of the fitness difference vs. niche difference framework, but with rigorous mathematics.  Could be a useful model for simulating species interactions but the paper itself dosen't present a simulation, only analytical results.
 
 # Model fitting and inference
