@@ -1,0 +1,190 @@
+---
+title: "Scale dependence of rates"
+author: "A. J. Rominger"
+date: "7/27/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+How do rates vary depending on the scale over which we measure them?  This is a great question recently brought up by Matt and Luke.  There's a shocking amount of empirical evidence that rate decays with scale approximately like a power law.  Why is that?
+
+Here's a little simulation to explore what happens with a simple birth death process.  Note that the output we'll be looking at is already a little abstracted.  Basically the output of this simulation is going to give us the slope (and F-test significance) of this relationship:
+
+```{r, echo=FALSE, fig.width=3, fig.height=3}
+library(socorro)
+x <- rep(exp(seq(log(1), log(1000), length.out = 10)), 3)
+y <- rlnorm(length(x), 2, 0.5)*x^-1
+
+par(mar = c(3, 3, 1, 0) + 0.5, mgp = c(2, 0.75, 0))
+plot(x, y, xlab = 'Scale', ylab = 'Rate', log = 'xy', axes = FALSE)
+logAxis(1:2)
+box()
+
+mod <- lm(log(y) ~ log(x))
+curve(exp(mod$coefficients[1]) * x^mod$coefficients[2], add = TRUE, col = 'red')
+```
+
+And then we're going to see if and when that slope is negative.
+
+We'll focus on speciation rate, and here's a toy example of how we calculate it
+
+```{r, echo=FALSE, fig.width=3, fig.height=3}
+x <- c(9, 10, 11, 12, 11, 10, 9, 10, 11)
+
+par(mar = c(3, 3, 1, 0) + 0.5, mgp = c(2, 0.75, 0))
+plot(stepfun(2:length(x) - 0.5, x), col.vert = 'red', lwd = 3, pch = 16, cex = 2,
+     panel.first = {
+         rect(par('usr')[1], par('usr')[3], 5, par('usr')[4], col = 'gray', border = NA)
+         rect(5, par('usr')[3], 10, par('usr')[4], col = 'gray95', border = NA)
+         abline(h = 9:12, lty = 2)
+     }, 
+     xlab = '', ylab = 'Number of species', main = '', xaxt = 'n')
+
+axis(1, at = c(3, 8), labels = c('Time bin 1', 'Time bin 2'), tick = FALSE, mgp = c(1, 0.1, 0))
+
+segments(x0 = c(1, 2, 3, 7, 8) + 0.5, 
+         y0 = c(9, 10, 11, 9, 10), y1 = c(9, 10, 11, 9, 10) + 1, 
+         col = hsv(0.65, 0.5, 1), lwd = 3.1)
+```
+
+Each vertical blue line represents a speciation event, so to get the rate, we simply sum up those events that fall in a given time bin and then divide by the duration of that time bin.  We also divide by the total number of species in the time bin so we get the per species rate.  The total number of species in a time bin is simply the number present at the lower edge of the bin, plus all speciation events that fall within the bin.
+
+We can now make a function to put all this together using the Gillespie algorithm to simulate a time homogeneous birth-death process. 
+
+```{r}
+# function to simulate a birth-death (or 'origination-extinctio') process
+# and investigate how observed rates (right now we only consider speciation)
+# change with the scale of observation
+#' @param nevent number of events (either birth or death) to simulation
+#' @param s0 initial species richness of the lineage; setting this largish 
+#' helps get longer runs before total lineage extinction
+#' @param lambda the intrinsic speciation rate
+#' @param mu the intrinsic extinction rate
+
+oeScaleSim <- function(nevent, s0, lambda, mu) {
+    n <- nevent
+    
+    # make 1000 realization of a bd process using Gillespie's algo
+    scaleDep <- replicate(1000, {
+        # simulate the events
+        dx <- sample(c(-1, 1), n, prob = c(mu, lambda), replace = TRUE)
+        
+        # sum them for richness 
+        x <- cumsum(c(s0, dx))[-1]
+        
+        # determine if total extinction happened
+        imax <- which(x == 0)[1]
+        if(is.na(imax)) imax <- n
+        
+        dx <- dx[1:imax]
+        x <- x[1:imax]
+        n <- imax
+        
+        # generate the timings of each event
+        tt <- cumsum(c(0, rexp(n - 1, x[-n] * (lambda + mu))))
+        
+        # cuts will be the breakpoints that determine our scales
+        cuts <- 1.25^(floor(log(5000 * 0.0001 / (1 + lambda - mu), 1.25)):
+                          floor(log(5000 * 0.01 * (1 + lambda - mu), 1.25)))
+        
+        
+        # set an arbitrary but useful minimum number of events, and make sure
+        # our whole range of cuts is covered by the simulation
+        if(n > 100 & max(tt) > max(cuts)) {
+            allO <- sapply(cuts, function(b) {
+                # sequence of break points given one cut size
+                bb <- seq(0, max(tt) + b, by = b)
+                
+                # a function to interpolate richness, for use with the seq
+                # of break points
+                div <- approxfun(tt, x, method = 'constant')
+                
+                # a course graining of the events
+                dxcourse <- split(dx, cut(tt, bb, right = FALSE))
+                dxcourse <- dxcourse[-length(dxcourse)]
+                
+                # the last time bin is likely to go beyond the temporal extent
+                # of the simulation so remove it
+                bb <- bb[1:length(dxcourse)]
+                
+                # count the speciation events within each course-grained
+                # time bin
+                o <- sapply(dxcourse, function(y) sum(y == 1))
+                
+                # return per species per time speciatoin rate
+                return(quantile(o / div(bb) / b, probs = c(0.025, 0.5, 0.975)))
+            })
+            
+            # calculate the log-log relationship between the speciation rate and
+            # the scale note we assume scale is equal to 1 / (size of time bins)
+            r <- log(allO[2, ])
+            s <- log(cuts)
+            mod <- lm(r ~ s)
+            
+            return(c(n = n, 
+                     mod$coefficients[2], 
+                     r2 = summary(mod)$r.squared, 
+                     pFVal = anova(mod)$`Pr(>F)`[1]))
+        } else {
+            # if the minimum number of events and timescale constraints
+            # didn't pass, then return NAs
+            return(c(n = n, s = NA, r2 = NA, pFVal = NA))
+        }
+    })
+    
+    # transpose it so our results are in columns
+    scaleDep <- t(scaleDep)
+    
+    return(scaleDep)
+}
+```
+
+```{r, cache=TRUE}
+# test drive it
+scaleDep <- oeScaleSim(5000, 50, 0.5, 0.5)
+```
+
+Now we're going to plot the log-log slope of rate versus scale against the total number of events before the simulation ended (which is the max on the x-axis of this graph at 5000), or before extinction. 
+
+We see that when we have fewer events before the extinction of the lineage we can end up with a significant negative relationship between rate and scale.  When the lineage survives to the end of the simulation it can sometime show a strong *positive* correlation between scale and rate. I think this is likely because these clades show spurious growth just by chance so that they have accumulated many species, and thus avoided total extinction.  Thus at the largest scales we have the chance to see a large net diversification, translating into large speciation rates.
+
+```{r, fig.width=6, fig.height=3, echo=FALSE}
+pval <- scaleDep[, 'pFVal']
+
+library(socorro) # a custom package for plotting you can install with 
+                 # `devtools::install_github('ajrominger/socorro')`
+
+layout(matrix(1:2, nrow = 1), widths = c(3, 2.5))
+
+par(mar = c(3, 3, 2, 0) + 0.5, mgp = c(1.75, 0.5, 0))
+plot(scaleDep[, c('n', 's')],
+     col = ifelse(pval > 0.05, 
+                  quantCol(pval, 
+                           gray(c(0.2, 0.6)), 'log', 
+                           xlim = c(0.05, max(pval, na.rm = TRUE))), 
+                  quantCol(pval, hsv(c(0.15, 0.7), c(1, 0.6), c(1, 1)), 'log', 
+                           xlim = c(min(pval, na.rm = TRUE), 0.05))),
+     xlab = 'Total number of events', 
+     ylab = 'Scale dependence of rate', 
+     pch = 16, cex = 0.5)
+
+
+
+plot(sort(pval), log = 'y',
+     col = ifelse(sort(pval) > 0.05, 
+                  quantCol(sort(pval), 
+                           gray(c(0.2, 0.6)), 'log', 
+                           xlim = c(0.05, max(pval, na.rm = TRUE))), 
+                  quantCol(sort(pval), hsv(c(0.15, 0.7), c(1, 0.6), c(1, 1)), 
+                           'log', xlim = c(min(pval, na.rm = TRUE), 0.05))), 
+     xlab = 'Ranked F-test', ylab = 'p-value', main = 'Legend',
+     pch = 16, cex = 0.5)
+
+abline(h = 0.05)
+text(200, 0.05, labels = 'p-value = 0.05', adj = c(0.5, -0.5), cex = 0.8)
+```
+
+Here the F-test refers to a test which contrasts a linear model with slope equal to zero versus free to vary.
