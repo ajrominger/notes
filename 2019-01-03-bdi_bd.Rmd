@@ -113,4 +113,72 @@ lines(newx, pnbinom(newx, size = nbK(nu, b), mu = nbMu(nu, b, d, 40)), col = 're
 
 ```
 
+
+We can put all this together in a function to simulate an assembledge of BDI processes from arbitrary starting conditions and for arbitrary time.  Helper functions are reproduced here such that this chunk could be copied into an eventual package
+
+```{r}
+#' @description a function to simulate a birth-death-immigration process
+#' @param n number of realizations
+#' @param N0 initial populations sizes, recycled for `n`
+#' @param b birth rate
+#' @param d death rate
+#' @param m immigration rate
+#' @param tau duration to be simulated
+
+rBDI <- function(n, N0, b, d, m, tau) {
+    
+}
+
+# negative binomial solutions
+.nbK <- function(m, b) {
+    m / b
+}
+
+.nbMu <- function(m, b, d, t) {
+    m * (exp((b - d) * t) - 1) / (b - d)
+}
+
+# modified geometric for BD process with N(0) = 1 (Kendall 1948 eq 27)
+.dmodgeo <- function(x, b, d, t) {
+    La <- exp((b - d) * t)
+    u <- b * (La - 1) / (b * La - d)
+    P0 <- d * (La - 1) / (b * La - d)
+    out <- numeric(length(x))
+    out[x == 0] <- P0
+    out[x > 0] <- (1 - P0) * (1 - u) * u^(x[x > 0] - 1)
+    
+    return(out)
+}
+
+# determines 
+.nMax <- function(b, d, t) {
+    
+}
+```
+
+
+Extra work to figure out general bounds of integration
+
+```{r, eval=FALSE}
+b <- 1.1 * 2
+d <- 1 * 2
+
+allPar <- expand.grid(b = seq(0.1, 10, length.out = 20), 
+                      d = seq(0.1, 10, length.out = 20), 
+                      tau = seq(1, 40, length.out = 20))
+allPar <- as.matrix(allPar)
+
+maxN <- parallel::mclapply(1:nrow(allPar), mc.cores = 10, FUN = function(i) {
+    nn <- 10:10^6
+    i <- min(which(dmodgeo(nn, allPar[i, 1], allPar[i, 2], allPar[i, 3]) <= .Machine$double.eps))
+    nn[i]
+})
+
+allPar <- as.data.frame(allPar)
+allPar$maxN <- unlist(maxN)
+
+plot(allPar$d, allPar$maxN)
+abline(5.75 * 1.25, 0.1 * 1.75)
+```
+
 ## References
