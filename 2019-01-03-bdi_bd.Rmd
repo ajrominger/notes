@@ -1,0 +1,116 @@
+---
+title: "Simulating birth-death-immigration: Round 3"
+author: "A. J. Rominger"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+tags: equilibrium diversification evo-ecology
+output: html_document
+bibliography: notes.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I've been working on this for a while and think I'm close.  From Kendall's work [@kendall1948] we have probability distributions for a birth-death-immigration process starting at $N = 0$ and for a birth-death processes starting at $N = 1$. It seems intuitive that we should be able to put those together.
+
+We're jumping off from where we were a year ago when I created these functions:
+
+```{r}
+# negative binomial solutions
+nbK <- function(m, b) {
+    m / b
+}
+
+nbMu <- function(m, b, d, t) {
+    m * (exp((b - d) * t) - 1) / (b - d)
+}
+
+# modified geometric for BD process with N(0) = 1 (Kendall 1948 eq 27)
+dmodgeo <- function(x, b, d, t) {
+    La <- exp((b - d) * t)
+    u <- b * (La - 1) / (b * La - d)
+    P0 <- d * (La - 1) / (b * La - d)
+    out <- numeric(length(x))
+    out[x == 0] <- P0
+    out[x > 0] <- (1 - P0) * (1 - u) * u^(x[x > 0] - 1)
+    
+    return(out)
+}
+```
+
+First I verify that a birth-death process can be decomposed into a BD process up to time $\tau_1$ and then extended to $\tau_2 > \tau_1$.
+
+```{r, fig.width=4, fig.height=4}
+library(socorro)
+suppressMessages(library(distr))
+
+# birth and death rates
+b <- 1.1
+d <- 1
+
+# probability objects relating to a process running 20 and 40 time units
+bd20 <- DiscreteDistribution(0:10^6, dmodgeo(0:10^6, b, d, 20))
+bd40 <- DiscreteDistribution(0:10^6, dmodgeo(0:10^6, b, d, 40))
+
+# a random sample of the process run for 40 time units
+x <- bd40@r(2000)
+plot(simpECDF(x))
+newx <- seq(0, ceiling(par('usr')[2]), length.out = 500)
+lines(newx, bd40@p(newx), col = 'red')
+
+# a random sample of the process run for 20 time units
+y <- bd20@r(2000)
+
+# that we thne extend to a total of 40 time units
+y40 <- c(y[y == 0], sapply(y[y > 0], function(n) sum(bd20@r(n))))
+
+points(simpECDF(y40), col = 'gray')
+```
+
+
+That worked.  Now we evaluate the process with immigration.  First, we'll need to establish useful bounds of integration for our probability distributions.
+
+```{r, fig.width=4, fig.height=4}
+tt <- seq(10, 40, length.out = 20)
+maxN <- sapply(tt, function(t) {
+    nn <- 10:10^6
+    i <- min(which(dmodgeo(nn, b, d, t) <= .Machine$double.eps))
+    (nn)[i]
+})
+
+plot(tt, log(maxN))
+abline(5.75, 0.1)
+```
+
+Now we simualte a BDI process by sprinkling immigration events on an interval according to a Poisson process and then initiating a BD process from each one of those immigration events
+
+```{r, fig.width=4, fig.height=4}
+# immigration rate
+nu <- 0.5
+
+# simulate BDI 
+z40 <- parallel::mclapply(1:100, mc.cores = 10, FUN = function(i) {
+    # immigration events
+    imm <- runif(rpois(1, nu * 40), 0, 40)
+    
+    # lineages arrising from those immigration events
+    N <- sapply(imm, function(tt) {
+        nMax <- ceiling(exp(5.75 + 0.1 * tt))
+        foo <- DiscreteDistribution(0:nMax, dmodgeo(0:nMax, b, d, tt))
+        foo@r(1)
+    })
+    sum(N)
+})
+z40 <- unlist(z40)
+
+plot(1, type = 'n', xlim = c(0, 3000), ylim = c(0, 1), 
+     xlab = 'Population size', ylab = 'Cumulative probability')
+for(i in 1:100) points(simpECDF(rnbinom(100, size = nbK(nu, b), mu = nbMu(nu, b, d, 40))), 
+                      col = gray(0.75, 0.1), pch = 16)
+points(simpECDF(z40))
+newx <- seq(0, ceiling(par('usr')[2]), length.out = 500)
+lines(newx, pnbinom(newx, size = nbK(nu, b), mu = nbMu(nu, b, d, 40)), col = 'red')
+
+```
+
+## References
